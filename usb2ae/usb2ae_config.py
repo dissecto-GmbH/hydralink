@@ -37,6 +37,7 @@ def main() -> None:
     # Disable Automatic Speed Detection
     mac.set_ads(False)
 
+    phy.reset(True)
     # Set speed
     if args.gigabit:
         mac.set_speed(2)
@@ -46,9 +47,10 @@ def main() -> None:
         phy.set_speed(100)
 
     phy.set_master(args.master)
+    phy.reset(False)
 
-    # No phase shift in RGMII clocks
-    phy[1, 0xa010] = 0x0000
+    # Set appropriate phase shifts in RGMII clocks
+    phy[1, 0xa010] = 0x0001
 
     if args.verbose:
 
