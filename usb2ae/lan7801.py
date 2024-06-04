@@ -95,7 +95,9 @@ class LAN7801:
     def set_speed(self, speed: int) -> None:
         if speed & 3 != speed:
             raise ValueError("MAC Configuration must be a 2-bit unsigned integer")
-        p = self[0x100]
+        old_reg = self[0x100]
+        p = old_reg
         p &= ~0x0006
         p |= (speed & 3) << 1
-        self[0x100] = p
+        if old_reg != p:
+            self[0x100] = p

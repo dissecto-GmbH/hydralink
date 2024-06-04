@@ -14,18 +14,39 @@ class BCM89881:
     def __setitem__(self, key: tuple[int, int], value: int) -> None:
         self.mac.write_mdio_reg_c45(self.phy_addr, *key, value)
 
+    def edit_register(self, devaddr: int, miiaddr: int, set: int, clr: int) -> int:
+        if set & 0xffff != set:
+            raise ValueError("set mask bust be a 16-bit unsigned integer")
+        if clr & 0xffff != clr:
+            raise ValueError("set mask bust be a 16-bit unsigned integer")
+        if clr & set:
+            raise ValueError("set and clr masks are conflicting")
+        reg = self.mac.read_mdio_reg_c45(self.phy_addr, devaddr, miiaddr)
+        old_reg = reg
+        reg &= (~clr) & 0xffff
+        reg |= set
+        if old_reg != reg:
+            self.mac.write_mdio_reg_c45(self.phy_addr, devaddr, miiaddr, reg)
+        return reg
+
+    def reset(self, rst: bool) -> None:
+        if rst:
+            self.edit_register(1, 0x0000, 0x8000, 0x0000)
+        else:
+            self.edit_register(1, 0x0000, 0x0000, 0x8000)
+
     def set_speed(self, speed: int) -> None:
         if speed == 1000:
-            self[1, 0x0000] = self[1, 0x0000] & ~0x0040 | 0x2000
-            self[1, 0x0834] = self[1, 0x0834] | 1
+            self.edit_register(1, 0x0000, 0x2000, 0x0040)
+            self.edit_register(1, 0x0834, 0x0001, 0x000e)
         elif speed == 100:
-            self[1, 0x0000] = self[1, 0x0000] & ~0x2000 | 0x0040
-            self[1, 0x0834] = self[1, 0x0834] | 1
+            self.edit_register(1, 0x0000, 0x0040, 0x2000)
+            self.edit_register(1, 0x0834, 0x0000, 0x000f)
         else:
             raise ValueError("Speed must be 100 or 1000")
 
     def set_master(self, master: bool) -> None:
         if master:
-            self[1, 0x0834] = self[1, 0x0834] | 0x4000
+            self.edit_register(1, 0x0834, 0x4000, 0x0000)
         else:
-            self[1, 0x0834] = self[1, 0x0834] & ~0x4000
+            self.edit_register(1, 0x0834, 0x0000, 0x4000)
