@@ -1,53 +1,19 @@
-import usb.core
-import usb.util
-import struct
-from typing import cast
+class LAN7801_LL:
+    def __init__(self) -> None:
+        raise NotImplementedError()
+
+    def write_reg(self, address: int, value: int) -> None:
+        raise NotImplementedError()
+
+    def read_reg(self, address: int) -> int:
+        raise NotImplementedError()
 
 
 class LAN7801:
-    def __init__(self, dev: usb.core.Device) -> None:
-        self.out_ep: (usb.Endpoint | None) = None
+    def __init__(self, dev: LAN7801_LL) -> None:
         self.dev = dev
-
-    def open_out_endpoint(self) -> None:
-        if self.out_ep is not None:
-            return
-        self.dev.set_configuration()
-        cfg = self.dev.get_active_configuration()
-        intf = cfg[(0, 0)]
-        out_ep = usb.util.find_descriptor(
-                intf,
-                custom_match=lambda e: (
-                    usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
-        )
-        assert out_ep.bEndpointAddress == 2
-        self.out_ep = out_ep
-
-    def send_pkt(self, buf: bytes) -> None:
-        self.open_out_endpoint()
-        assert self.out_ep is not None
-        buf = bytes.fromhex("deadbeef")
-        buf = buf + b"\x00" * max(0, 32 - len(buf))
-        self.out_ep.write(struct.pack("<II", (0xfffff & len(buf)), 0) + buf)
-
-    def write_reg(self, address: int, value: int) -> None:
-        if value != value & 0xffffffff:
-            raise ValueError("Value must be an unsigned 32-bit integer")
-        if address != address & 0xfff:
-            raise ValueError("Value must be an unsigned 12-bit integer")
-        msg = struct.pack("<I", value)
-        ret = self.dev.ctrl_transfer(0x40, 0xa0, 0, address, msg)
-        if ret != 4:
-            raise IOError("Written bytes is not 4")
-
-    def read_reg(self, address: int) -> int:
-        if address != address & 0xfff:
-            raise ValueError("Value must be an unsigned 12-bit integer")
-        ret = self.dev.ctrl_transfer(0xc0, 0xa1, 0, address, 4)
-        if len(ret) != 4:
-            raise IOError("Received response is not 4 bytes")
-        val, = struct.unpack("<I", bytes(ret))
-        return cast(int, val)
+        self.write_reg = dev.write_reg
+        self.read_reg = dev.read_reg
 
     def read_mdio_reg(self, phy_addr: int, miirinda: int) -> int:
         if phy_addr != phy_addr & 0x1f:

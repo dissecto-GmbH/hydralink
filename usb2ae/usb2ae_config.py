@@ -1,5 +1,7 @@
 import usb.core
 import usb.util
+from lan7801_libusb import LAN7801_LibUSB
+from lan7801_win import LAN7801_Win
 from lan7801 import LAN7801
 from bcm89881 import BCM89881
 import argparse
@@ -17,10 +19,13 @@ def main() -> None:
     args = parser.parse_args()
 
     # find our device
-    dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
+    if 0:
+        dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
+        mac = LAN7801(LAN7801_LibUSB(dev))
+    else:
+        mac = LAN7801(LAN7801_Win())
 
     # Read MAC register
-    mac = LAN7801(dev)
     identifier = mac[0]
     print(f"MAC identifier: {identifier:x}")
     assert (identifier >> 16) == 0x7801
