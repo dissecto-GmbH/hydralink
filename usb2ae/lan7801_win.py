@@ -1,5 +1,5 @@
 from ctypes.wintypes import DWORD, HANDLE, LPCSTR, BOOL, LPVOID, LPDWORD
-from typing import cast
+from typing import Optional, cast
 import ctypes
 import struct
 
@@ -15,13 +15,18 @@ DeviceIoControl.restype = BOOL
 
 
 class LAN7801_Win(LAN7801_LL):
-    def __init__(self) -> None:
+    def __init__(self, interface_idx: Optional[int] = None) -> None:
         self.handle = CreateFile(b"\\\\.\\LAN7800_IOCTL", 0xc0000000, 3, 0, 3, 0x80, 0)
         if ctypes.GetLastError():
             raise ctypes.WinError()
 
         self._buffer = bytearray(0x1000)
         self._buffer_c = (ctypes.c_char * 0x1000).from_buffer(self._buffer)
+        self.iidx = 0
+        self.oidx = 0x10002
+        if interface_idx is not None:
+            self.iidx = interface_idx
+            self.oidx = 0x20001
 
     def _xfer(self, buffer: bytes) -> bytes:
         if len(buffer) > len(self._buffer):
@@ -47,7 +52,7 @@ class LAN7801_Win(LAN7801_LL):
         if address != address & 0xfff:
             raise ValueError("Address must be an unsigned 12-bit integer")
 
-        resbuf = self._xfer(struct.pack("<IIIII", 0x10002, 9, 0, address, value))
+        resbuf = self._xfer(struct.pack("<IIIII", self.oidx, 9, self.iidx, address, value))
 
         err = struct.unpack("<I", resbuf[8:12])[0]
         if err != 0:
@@ -60,7 +65,7 @@ class LAN7801_Win(LAN7801_LL):
         if address != address & 0xfff:
             raise ValueError("Address must be an unsigned 12-bit integer")
 
-        resbuf = self._xfer(struct.pack("<IIII", 0x10002, 8, 0, address))
+        resbuf = self._xfer(struct.pack("<IIII", self.oidx, 8, self.iidx, address))
 
         err = struct.unpack("<I", resbuf[8:12])[0]
         if err != 0:
