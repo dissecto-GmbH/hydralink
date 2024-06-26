@@ -1,14 +1,16 @@
 import usb.core
 import struct
-from typing import cast
+from typing import Optional, cast
 
 from lan7801 import LAN7801_LL
 
 
 class LAN7801_LibUSB(LAN7801_LL):
-    def __init__(self, dev: usb.core.Device) -> None:
-        if dev is None or not isinstance(dev, usb.core.Device):
-            raise ValueError("Need a pyusb Device object")
+    def __init__(self, dev: Optional[usb.core.Device] = None) -> None:
+        if dev is None:
+            dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
+            if dev is None:
+                raise FileNotFoundError("Device not found!")
         self.dev = dev
 
     def write_reg(self, address: int, value: int) -> None:

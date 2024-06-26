@@ -13,10 +13,8 @@ class HydraLink:
                 from lan7801_win import LAN7801_Win
                 ll = LAN7801_Win()
             else:
-                import usb.core
                 from lan7801_libusb import LAN7801_LibUSB
-                dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
-                ll = LAN7801_LibUSB(dev)
+                ll = LAN7801_LibUSB()
 
         self.mac = LAN7801(ll)
 

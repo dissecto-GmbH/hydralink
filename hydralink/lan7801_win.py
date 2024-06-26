@@ -17,7 +17,10 @@ DeviceIoControl.restype = BOOL
 class LAN7801_Win(LAN7801_LL):
     def __init__(self, interface_idx: Optional[int] = None) -> None:
         self.handle = CreateFile(b"\\\\.\\LAN7800_IOCTL", 0xc0000000, 3, 0, 3, 0x80, 0)
-        if ctypes.GetLastError():
+        err = ctypes.GetLastError()
+        if err == 2:
+            raise FileNotFoundError("Device not found!")
+        elif err:
             raise ctypes.WinError()
 
         self._buffer = bytearray(0x1000)
