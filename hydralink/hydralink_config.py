@@ -1,9 +1,6 @@
-import usb.core
-import usb.util
-from lan7801 import LAN7801
-from bcm89881 import BCM89881
 import argparse
-import sys
+
+from hydralink import HydraLink
 
 
 def main() -> None:
@@ -18,51 +15,16 @@ def main() -> None:
     parser.add_argument('-r', '--readonly', action='store_true')
     args = parser.parse_args()
 
-    # find our device
-    print(sys.platform)
-    if sys.platform in ['win32', 'cygwin', 'msys']:
-        from lan7801_win import LAN7801_Win
-        mac = LAN7801(LAN7801_Win())
-    else:
-        from lan7801_libusb import LAN7801_LibUSB
-        dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
-        mac = LAN7801(LAN7801_LibUSB(dev))
+    hl = HydraLink()
+    mac = hl.mac
+    phy = hl.phy
 
-    # Read MAC register
-    identifier = mac[0]
-    print(f"MAC identifier: {identifier:x}")
-    assert (identifier >> 16) == 0x7801
-
-    # Access clause 45 registers
-    phy = BCM89881(mac, 0)
-    identifier = phy[1, 2]
-    assert identifier == 0xae02
-
-    print(f"PHY identifier: {identifier:x}")
     if not args.readonly:
         # Enable GPIO4
         mac[0x01c] = 0x10100
         print("HW_CFG=0x%08x" % mac[0x010])
 
-        # Disable Automatic Speed Detection
-        mac.set_ads(False)
-
-        phy.reset(True)
-        # Set speed
-        if args.gigabit:
-            mac.set_speed(2)
-            phy.set_speed(1000)
-        else:
-            mac.set_speed(1)
-            phy.set_speed(100)
-
-        phy.set_master(args.master)
-        phy.reset(False)
-
-        # Set appropriate phase shifts in RGMII clocks
-        phy[1, 0xa010] = 0x0001
-        # Set RGMII interface to 3.3V
-        phy[1, 0xa015] = 0x0000
+        hl.setup(args.master, 1000 if args.gigabit else 100)
 
     if args.verbose:
         print("PMA_PMD_CONTROL_1 = 0x%04x" % phy[1, 0])
@@ -108,9 +70,9 @@ def main() -> None:
             print(hex(mac[0x01c]))
             mac[0x01c] = 0x10100
 
-            # Set LEDS to default state
-            phy[1, 0x931e] = 0x0010
-            phy[1, 0x931d] = 0x0063
+        # Set LEDS to default state
+        phy[1, 0x931e] = 0x0010
+        phy[1, 0x931d] = 0x0063
 
 
 if __name__ == '__main__':
