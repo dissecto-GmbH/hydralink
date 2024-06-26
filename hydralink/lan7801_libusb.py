@@ -7,6 +7,8 @@ from lan7801 import LAN7801_LL
 
 class LAN7801_LibUSB(LAN7801_LL):
     def __init__(self, dev: usb.core.Device) -> None:
+        if dev is None or not isinstance(dev, usb.core.Device):
+            raise ValueError("Need a pyusb Device object")
         self.dev = dev
 
     def write_reg(self, address: int, value: int) -> None:

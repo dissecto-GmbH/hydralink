@@ -8,7 +8,7 @@ Can be either used as a standalone application, or as a module imported from ano
 Installing the pyusb module is only necessary on Linux
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install pyusb
 ```
