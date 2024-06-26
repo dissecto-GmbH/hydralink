@@ -18,7 +18,6 @@ mypy:
 .publish:
   image: python:latest
   needs:
-    - py311
     - mypy
     - health
   tags:
