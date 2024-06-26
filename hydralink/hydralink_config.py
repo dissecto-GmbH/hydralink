@@ -9,8 +9,8 @@ import sys
 def main() -> None:
 
     parser = argparse.ArgumentParser(
-                        prog='usb2ae_config',
-                        description='Configures the USB2AE MAC and PHY interfaces')
+                        prog='hydralink_config',
+                        description='Configures the dissecto HydraLink MAC and PHY')
     parser.add_argument('-g', '--gigabit', action='store_true')
     parser.add_argument('-m', '--master',  action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
