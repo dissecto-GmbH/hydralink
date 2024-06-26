@@ -20,6 +20,8 @@ class LAN7801_Win(LAN7801_LL):
         err = ctypes.GetLastError()
         if err == 2:
             raise FileNotFoundError("Device not found!")
+        elif err == 4:
+            raise IOError("Device is in use, please retry later!")
         elif err:
             raise ctypes.WinError()
 
