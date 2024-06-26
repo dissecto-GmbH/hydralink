@@ -23,14 +23,14 @@ class HydraLink:
 
         # Read MAC register
         identifier = self.mac[0]
-        print(f"MAC identifier: {identifier:x}")
-        assert (identifier >> 16) == 0x7801
+        if (identifier >> 16) != 0x7801:
+            raise IOError(f"Wrong MAC identifier: 0x{identifier:x}")
 
         # Access clause 45 registers
         self.phy = BCM89881(self.mac, 0)
         identifier = self.phy[1, 2]
-        print(f"PHY identifier: {identifier:x}")
-        assert identifier == 0xae02
+        if identifier != 0xae02:
+            raise IOError(f"Wrong PHY identifier: 0x{identifier:x}")
 
     def setup(self,
               master: Optional[bool] = None,
@@ -41,16 +41,14 @@ class HydraLink:
 
         phy.reset(True)
 
-        # Disable Automatic Speed Detection
-        mac.set_ads(False)
-
         # Set appropriate phase shifts in RGMII clocks
         phy[1, 0xa010] = 0x0001
         # Set RGMII interface to 3.3V
         phy[1, 0xa015] = 0x0000
 
         if speed is not None:
-            # Set speed
+            # Disable Automatic Speed Detection
+            mac.set_ads(False)
             if speed == 1000:
                 mac.set_speed(2)
                 phy.set_speed(1000)
@@ -63,4 +61,5 @@ class HydraLink:
         if master is not None:
             phy.set_master(master)
 
+        # Deassert reset, resume operation
         phy.reset(False)
