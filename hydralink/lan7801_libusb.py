@@ -1,5 +1,4 @@
 import usb.core
-import usb.util
 import struct
 from typing import cast
 

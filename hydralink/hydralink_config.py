@@ -16,15 +16,11 @@ def main() -> None:
     args = parser.parse_args()
 
     hl = HydraLink()
+    if not args.readonly:
+        hl.setup(master=args.master, speed=(1000 if args.gigabit else 100))
+
     mac = hl.mac
     phy = hl.phy
-
-    if not args.readonly:
-        # Enable GPIO4
-        mac[0x01c] = 0x10100
-        print("HW_CFG=0x%08x" % mac[0x010])
-
-        hl.setup(args.master, 1000 if args.gigabit else 100)
 
     if args.verbose:
         print("PMA_PMD_CONTROL_1 = 0x%04x" % phy[1, 0])
@@ -55,6 +51,9 @@ def main() -> None:
         print("LED and INTR Control = 0x%04x" % phy[1, 0xa027])
 
     if args.blink and not args.readonly:
+        # Enable GPIO4
+        mac[0x01c] = 0x10100
+
         i = int(args.blink, 0)
         while i != 0:
             i -= 1
