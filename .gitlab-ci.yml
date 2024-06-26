@@ -15,14 +15,6 @@ mypy:
     - pip install tox
     - python -m tox -e mypy
 
-py311:
-  tags:
-    - docker
-  image: python:3.11
-  script:
-    - pip install tox
-    - python -m tox -e py311-linux_non_root
-
 .publish:
   image: python:latest
   needs:
