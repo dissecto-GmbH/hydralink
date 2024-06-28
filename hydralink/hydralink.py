@@ -1,7 +1,10 @@
+#! /usr/bin/env python
+import sys
+
 from typing import Optional
+
 from hydralink.lan7801 import LAN7801, LAN7801_LL
 from hydralink.bcm89881 import BCM89881
-import sys
 
 
 class HydraLink:
@@ -10,10 +13,10 @@ class HydraLink:
         # find our device
         if ll is None:
             if sys.platform in ['win32', 'cygwin', 'msys']:
-                from lan7801_win import LAN7801_Win
+                from hydralink.lan7801_win import LAN7801_Win
                 ll = LAN7801_Win()
             else:
-                from lan7801_libusb import LAN7801_LibUSB
+                from hydralink.lan7801_libusb import LAN7801_LibUSB
                 ll = LAN7801_LibUSB()
 
         self.mac = LAN7801(ll)

@@ -1,9 +1,11 @@
-from ctypes.wintypes import DWORD, HANDLE, LPCSTR, BOOL, LPVOID, LPDWORD
-from typing import Optional, cast
+#! /usr/bin/env python
 import ctypes
 import struct
 
-from lan7801 import LAN7801_LL
+from typing import Optional, cast
+from ctypes.wintypes import DWORD, HANDLE, LPCSTR, BOOL, LPVOID, LPDWORD
+
+from hydralink.lan7801 import LAN7801_LL
 
 CreateFile = ctypes.windll.kernel32.CreateFileA
 CreateFile.argtypes = [LPCSTR, DWORD, DWORD, LPVOID, DWORD, DWORD, HANDLE]
