@@ -1,6 +1,6 @@
 from typing import Optional
-from lan7801 import LAN7801, LAN7801_LL
-from bcm89881 import BCM89881
+from hydralink.lan7801 import LAN7801, LAN7801_LL
+from hydralink.bcm89881 import BCM89881
 import sys
 
 
