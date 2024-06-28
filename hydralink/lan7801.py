@@ -1,6 +1,7 @@
+#! /usr/bin/env python
+
+
 class LAN7801_LL:
-    def __init__(self) -> None:
-        raise NotImplementedError()
 
     def write_reg(self, address: int, value: int) -> None:
         raise NotImplementedError()

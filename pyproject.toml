@@ -35,4 +35,7 @@ exclude = [
     "test*",
 ]
 
+[project.scripts]
+hydralink_config = "hydralink:main"
+
 [tool.setuptools_scm]

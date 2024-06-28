@@ -1,4 +1,5 @@
-from lan7801 import LAN7801
+#! /usr/bin/env python
+from hydralink.lan7801 import LAN7801
 
 
 class BCM89881:

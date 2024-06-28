@@ -1,8 +1,10 @@
+#! /usr/bin/env python
 import usb.core
 import struct
+
 from typing import Optional, cast
 
-from lan7801 import LAN7801_LL
+from hydralink.lan7801 import LAN7801_LL
 
 
 class LAN7801_LibUSB(LAN7801_LL):
