@@ -13,10 +13,11 @@ def main() -> None:
     parser.add_argument('-m', '--master',  action='store_true')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-b', '--blink', default="0")
+    parser.add_argument('-d', '--device', type=int)
     parser.add_argument('-r', '--readonly', action='store_true')
     args = parser.parse_args()
 
-    hl = HydraLink()
+    hl = HydraLink(args.device)
     if not args.readonly:
         hl.setup(master=args.master, speed=(1000 if args.gigabit else 100))
 

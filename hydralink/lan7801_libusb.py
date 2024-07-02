@@ -2,17 +2,22 @@
 import usb.core
 import struct
 
-from typing import Optional, cast
+from typing import Union, cast
 
 from hydralink.lan7801 import LAN7801_LL
 
 
 class LAN7801_LibUSB(LAN7801_LL):
-    def __init__(self, dev: Optional[usb.core.Device] = None) -> None:
-        if dev is None:
+    def __init__(self, d: Union[None, int, usb.core.Device] = None) -> None:
+        if isinstance(d, usb.core.Device):
+            dev = d
+        elif isinstance(d, int):
+            dev = list(usb.core.find(find_all=True, idVendor=0x0424, idProduct=0x7801))[d]
+        else:
             dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
-            if dev is None:
-                raise FileNotFoundError("Device not found!")
+
+        if dev is None:
+            raise FileNotFoundError("Device not found!")
         self.dev = dev
 
     def write_reg(self, address: int, value: int) -> None:

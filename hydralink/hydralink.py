@@ -1,25 +1,30 @@
 #! /usr/bin/env python
+import struct
 import sys
 
-from typing import Optional
+from typing import Union, Optional
 
 from hydralink.lan7801 import LAN7801, LAN7801_LL
 from hydralink.bcm89881 import BCM89881
 
 
+def get_lan7801(ll: Union[None, int, LAN7801_LL] = None) -> LAN7801:
+    if isinstance(ll, LAN7801_LL):
+        return LAN7801(ll)
+
+    is_windows = sys.platform in ['win32', 'cygwin', 'msys']
+
+    if is_windows:
+        from hydralink.lan7801_win import LAN7801_Win
+        return LAN7801(LAN7801_Win(ll))
+    else:
+        from hydralink.lan7801_libusb import LAN7801_LibUSB
+        return LAN7801(LAN7801_LibUSB(ll))
+
+
 class HydraLink:
-    def __init__(self, ll: Optional[LAN7801_LL] = None) -> None:
-
-        # find our device
-        if ll is None:
-            if sys.platform in ['win32', 'cygwin', 'msys']:
-                from hydralink.lan7801_win import LAN7801_Win
-                ll = LAN7801_Win()
-            else:
-                from hydralink.lan7801_libusb import LAN7801_LibUSB
-                ll = LAN7801_LibUSB()
-
-        self.mac = LAN7801(ll)
+    def __init__(self, ll: Union[None, int, LAN7801_LL] = None) -> None:
+        self.mac = get_lan7801(ll)
 
         # Read MAC register
         identifier = self.mac[0]
@@ -34,7 +39,8 @@ class HydraLink:
 
     def setup(self,
               master: Optional[bool] = None,
-              speed: Optional[int] = None
+              speed: Optional[int] = None,
+              mac_addr: Optional[str] = None
               ) -> None:
         mac = self.mac
         phy = self.phy
@@ -45,6 +51,19 @@ class HydraLink:
         phy[1, 0xa010] = 0x0001
         # Set RGMII interface to 3.3V
         phy[1, 0xa015] = 0x0000
+
+        if mac_addr is not None:
+            mac_addr_bytes = b''
+            for b in mac_addr.split(':'):
+                bb = bytes.fromhex(b)
+                if len(bb) != 1:
+                    raise ValueError("Malformed MAC address")
+                mac_addr_bytes += bb
+            if len(mac_addr_bytes) != 6:
+                raise ValueError("Malformed MAC address")
+            hi, lo = struct.unpack(">HI", mac_addr_bytes)
+            mac[0x118] = hi
+            mac[0x11c] = lo
 
         if speed is not None:
             # Disable Automatic Speed Detection
