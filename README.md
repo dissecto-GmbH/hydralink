@@ -17,19 +17,19 @@ python -m pip install pyusb
 
 ```bash
 # Enable slave mode, 100 megabits speed
-python ./hydralink/hydralink_config.py
+python -m hydralink
 
 # Enable master mode, 100 megabits speed
-python ./hydralink/hydralink_config.py -m
+python -m hydralink -m
 
 # Enable slave mode, gigabit speed
-python ./hydralink/hydralink_config.py -g
+python -m hydralink -g
 
 # Enable master mode, gigabit speed
-python ./hydralink/hydralink_config.py -m -g
+python -m hydralink -m -g
 
 # Blink the LEDs 10 times
-python ./hydralink/hydralink_config.py -b 10
+python -m hydralink -b 10
 ```
 
 ## API
