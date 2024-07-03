@@ -40,7 +40,8 @@ class HydraLink:
     def setup(self,
               master: Optional[bool] = None,
               speed: Optional[int] = None,
-              mac_addr: Optional[str] = None
+              mac_addr: Optional[str] = None,
+              promiscuous: bool = True
               ) -> None:
         mac = self.mac
         phy = self.phy
@@ -51,6 +52,9 @@ class HydraLink:
         phy[1, 0xa010] = 0x0001
         # Set RGMII interface to 3.3V
         phy[1, 0xa015] = 0x0000
+
+        if promiscuous:
+            mac[0x0b0] = 0x700
 
         if mac_addr is not None:
             mac_addr_bytes = b''
