@@ -2,7 +2,6 @@
 import ctypes
 import struct
 
-import time
 from typing import Optional, cast
 from hydralink.windows_apis import CloseHandle, CreateFile, DeviceIoControl
 
