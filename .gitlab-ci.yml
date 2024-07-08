@@ -1,0 +1,52 @@
+health:
+  tags:
+    - docker
+  image: python:3.11
+  script:
+    - pip install tox
+    - python -m tox -e flake8
+    - python -m tox -e twine
+
+mypy:
+  tags:
+    - docker
+  image: python:latest
+  script:
+    - pip install tox
+    - python -m tox -e mypy
+
+flake8:
+  tags:
+    - docker
+  image: python:latest
+  script:
+    - pip install tox
+    - python -m tox -e flake8
+
+.publish:
+  image: python:latest
+  needs:
+    - mypy
+    - flake8
+    - health
+  tags:
+    - docker
+  script:
+    - pip install build twine
+    - python -m build
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+
+publish_tags:
+  extends: .publish
+  only:
+    - tags
+  except:
+    - branches
+
+publish_nightly:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - when: never
+  extends: .publish
+
