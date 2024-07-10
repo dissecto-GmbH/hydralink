@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import ctypes
 import struct
+import time
 
 from typing import Optional, cast
 from hydralink.windows_apis import CloseHandle, CreateFile, DeviceIoControl
@@ -10,10 +11,9 @@ from hydralink.lan7801 import LAN7801_LL
 
 class LAN7801_Win(LAN7801_LL):
     class DriverError(Exception):
-        pass
-
-    class Busy(DriverError):
-        pass
+        def __init__(self, errno: int):
+            self.errno = errno
+            Exception.__init__(self, f"LAN7801 DeviceIoControl failed with error {errno}")
 
     def __init__(self, interface_idx: Optional[int] = None) -> None:
         self.handle = CreateFile(b"\\\\.\\LAN7800_IOCTL", 0xc0000000, 3, 0, 3, 0x80, 0)
@@ -34,29 +34,34 @@ class LAN7801_Win(LAN7801_LL):
     def __del__(self) -> None:
         CloseHandle(self.handle)
 
-    def _xfer(self, buffer: bytes) -> bytes:
+    def _xfer(self, buffer: bytes, timeout: float = 5) -> bytes:
         if len(buffer) > len(self._buffer):
             raise ValueError("Too much data to transfer")
         self._buffer[:len(buffer)] = buffer
 
         outsize = ctypes.c_uint32(0)
-        if not DeviceIoControl(
-                self.handle, 0x122400,
-                self._buffer_c, len(buffer),
-                self._buffer_c, len(self._buffer), ctypes.byref(outsize),
-                0):
-            raise ctypes.WinError()
+        deadline = time.monotonic() + timeout
+        err = 4
 
-        if outsize.value > len(self._buffer):
-            raise OverflowError(f"LAN7801 response too large ({outsize.value} > {len(self._buffer)})")
-        if outsize.value < 16:
-            raise IOError(f"LAN7801 response too small ({outsize.value} < 16))")
+        while err != 0:
+            if not DeviceIoControl(
+                    self.handle, 0x122400,
+                    self._buffer_c, len(buffer),
+                    self._buffer_c, len(self._buffer), ctypes.byref(outsize),
+                    0):
+                raise ctypes.WinError()
 
-        err = struct.unpack("<I", self._buffer[8:12])[0]
-        if err == 4:
-            raise LAN7801_Win.Busy("LAN7801 is busy, please retry later or reconnect the device")
-        if err != 0:
-            raise LAN7801_Win.DriverError(f"LAN7801 DeviceIoControl failed with error {err}")
+            if outsize.value > len(self._buffer):
+                raise OverflowError(f"LAN7801 response too large ({outsize.value} > {len(self._buffer)})")
+            if outsize.value < 16:
+                raise IOError(f"LAN7801 response too small ({outsize.value} < 16))")
+
+            err = struct.unpack("<I", self._buffer[8:12])[0]
+            if err == 4:
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("LAN7801 is busy, please retry later or reconnect the device")
+            elif err != 0:
+                raise LAN7801_Win.DriverError(err)
 
         return bytes(self._buffer[16:outsize.value])
 
