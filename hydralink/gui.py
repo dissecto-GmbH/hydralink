@@ -1,3 +1,7 @@
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from tkinter import ttk, messagebox
 import tkinter as tk
 from typing import Any, Dict, NamedTuple, Optional
@@ -161,6 +165,8 @@ class Gui:
         try:
             found = hydralink_by_serial(self.device_var.get())
             self.hl = found
+            if found is None:
+                messagebox.showerror("Error", "Selected HydraLink was not found")
             self.device_selected()
             return 1
         except Exception as x:

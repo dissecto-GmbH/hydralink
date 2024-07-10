@@ -1,13 +1,12 @@
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from ctypes import WinError, sizeof, GetLastError
-from ctypes.wintypes import BYTE, DWORD, PDWORD, BOOL, ULONG, PULONG, HANDLE, LPCSTR, LPVOID, LPDWORD, PBYTE
+from ctypes.wintypes import BYTE, DWORD, PDWORD, BOOL, ULONG, PULONG, HANDLE, LPCSTR, LPVOID, PBYTE
 import ctypes
 import re
 from typing import Any, Iterable, List, NamedTuple, Tuple
-
-PCTSTR = ctypes.c_char_p
-HWND = ctypes.c_uint
-HDEVINFO = LPVOID
-PSP_DEVICE_INTERFACE_DETAIL_DATA = LPVOID
 
 DIGCF_PRESENT = 2
 DIGCF_DEVICEINTERFACE = 16
@@ -24,15 +23,6 @@ class GUID(ctypes.Structure):
         ('Data4', ctypes.c_ubyte*8),
     ]
 
-    def __str__(self) -> str:
-        return "{%08x-%04x-%04x-%s-%s}" % (
-            self.Data1,
-            self.Data2,
-            self.Data3,
-            ''.join(["%02x" % d for d in self.Data4[:2]]),
-            ''.join(["%02x" % d for d in self.Data4[2:]]),
-        )
-
 
 class SP_DEVICE_INTERFACE_DATA(ctypes.Structure):
     _fields_ = [
@@ -41,12 +31,6 @@ class SP_DEVICE_INTERFACE_DATA(ctypes.Structure):
         ('Flags', DWORD),
         ('Reserved', PULONG),
     ]
-
-    def __str__(self) -> str:
-        return "InterfaceClassGuid:%s Flags:%s" % (self.InterfaceClassGuid, self.Flags)
-
-
-PSP_DEVICE_INTERFACE_DATA = ctypes.POINTER(SP_DEVICE_INTERFACE_DATA)
 
 
 class SP_DEVINFO_DATA(ctypes.Structure):
@@ -57,9 +41,6 @@ class SP_DEVINFO_DATA(ctypes.Structure):
         ('Reserved', PULONG)
     ]
 
-    def __str__(self) -> str:
-        return "ClassGuid:%s DevInst:%s" % (self.ClassGuid, self.DevInst)
-
 
 class DEVPROPKEY(ctypes.Structure):
     _fields_ = [
@@ -67,11 +48,6 @@ class DEVPROPKEY(ctypes.Structure):
         ('pid', ULONG)
     ]
 
-    def __str__(self) -> str:
-        return "fmtid:%s pid:%s" % (self.fmtid, self.pid)
-
-
-PSP_DEVINFO_DATA = ctypes.POINTER(SP_DEVINFO_DATA)
 
 CreateFile = ctypes.windll.kernel32.CreateFileA
 CreateFile.argtypes = [LPCSTR, DWORD, DWORD, LPVOID, DWORD, DWORD, HANDLE]
@@ -82,34 +58,36 @@ CloseHandle.argtypes = [HANDLE]
 CloseHandle.restype = BOOL
 
 DeviceIoControl = ctypes.windll.kernel32.DeviceIoControl
-DeviceIoControl.argtypes = [HANDLE, DWORD, LPVOID, DWORD, LPVOID, DWORD, LPDWORD, LPVOID]
+DeviceIoControl.argtypes = [HANDLE, DWORD, LPVOID, DWORD, LPVOID, DWORD, PDWORD, LPVOID]
 DeviceIoControl.restype = BOOL
 
 SetupDiDestroyDeviceInfoList = ctypes.windll.setupapi.SetupDiDestroyDeviceInfoList
-SetupDiDestroyDeviceInfoList.argtypes = [HDEVINFO]
+SetupDiDestroyDeviceInfoList.argtypes = [LPVOID]
 SetupDiDestroyDeviceInfoList.restype = BOOL
 
 SetupDiGetClassDevs = ctypes.windll.setupapi.SetupDiGetClassDevsA
-SetupDiGetClassDevs.argtypes = [ctypes.POINTER(GUID), PCTSTR, HWND, DWORD]
-SetupDiGetClassDevs.restype = HDEVINFO
+SetupDiGetClassDevs.argtypes = [ctypes.POINTER(GUID), LPCSTR, DWORD, DWORD]
+SetupDiGetClassDevs.restype = LPVOID
 
 SetupDiEnumDeviceInterfaces = ctypes.windll.setupapi.SetupDiEnumDeviceInterfaces
-SetupDiEnumDeviceInterfaces.argtypes = [HDEVINFO, PSP_DEVINFO_DATA, ctypes.POINTER(GUID), DWORD,
-                                        PSP_DEVICE_INTERFACE_DATA]
+SetupDiEnumDeviceInterfaces.argtypes = [LPVOID, ctypes.POINTER(SP_DEVINFO_DATA),
+                                        ctypes.POINTER(GUID), DWORD,
+                                        ctypes.POINTER(SP_DEVICE_INTERFACE_DATA)]
 SetupDiEnumDeviceInterfaces.restype = BOOL
 
 SetupDiGetDeviceInterfaceDetail = ctypes.windll.setupapi.SetupDiGetDeviceInterfaceDetailA
-SetupDiGetDeviceInterfaceDetail.argtypes = [HDEVINFO, PSP_DEVICE_INTERFACE_DATA, PSP_DEVICE_INTERFACE_DETAIL_DATA,
-                                            DWORD, PDWORD, PSP_DEVINFO_DATA]
+SetupDiGetDeviceInterfaceDetail.argtypes = [LPVOID, ctypes.POINTER(SP_DEVICE_INTERFACE_DATA), LPVOID,
+                                            DWORD, PDWORD, ctypes.POINTER(SP_DEVINFO_DATA)]
 SetupDiGetDeviceInterfaceDetail.restype = BOOL
 
 SetupDiGetDeviceInterfacePropertyKeys = ctypes.windll.setupapi.SetupDiGetDeviceInterfacePropertyKeys
-SetupDiGetDeviceInterfacePropertyKeys.argtypes = [HDEVINFO, PSP_DEVICE_INTERFACE_DATA, ctypes.POINTER(DEVPROPKEY),
-                                                  DWORD, PDWORD, DWORD]
+SetupDiGetDeviceInterfacePropertyKeys.argtypes = [LPVOID, ctypes.POINTER(SP_DEVICE_INTERFACE_DATA),
+                                                  ctypes.POINTER(DEVPROPKEY), DWORD, PDWORD, DWORD]
 SetupDiGetDeviceInterfacePropertyKeys.restype = BOOL
 
 SetupDiGetDeviceRegistryProperty = ctypes.windll.setupapi.SetupDiGetDeviceRegistryPropertyA
-SetupDiGetDeviceRegistryProperty.argtypes = [HDEVINFO, PSP_DEVINFO_DATA, DWORD, PDWORD, PBYTE, DWORD, PDWORD]
+SetupDiGetDeviceRegistryProperty.argtypes = [LPVOID, ctypes.POINTER(SP_DEVINFO_DATA),
+                                             DWORD, PDWORD, PBYTE, DWORD, PDWORD]
 SetupDiGetDeviceRegistryProperty.restype = BOOL
 
 GUID_DEVINTERFACE_USB_DEVICE = GUID(
@@ -228,7 +206,6 @@ def list_usb_devices() -> Iterable[FoundUsbDevice]:
         details = detailData[4:]
         devicePath = details[:details.index(b'\x00')].decode('latin1')
 
-        # wSetupDiGetDeviceInterfacePropertyKeys(g_hdi, did)
         PropertyBuffer, _ = wSetupDiGetDeviceRegistryProperty(g_hdi, devinfo, SPDRP_DRIVER)
 
         software_key = PropertyBuffer.decode('latin1')
@@ -246,9 +223,3 @@ def list_usb_devices() -> Iterable[FoundUsbDevice]:
         )
 
     SetupDiDestroyDeviceInfoList(g_hdi)
-
-
-if __name__ == '__main__':
-    for t in list_usb_devices():
-        if t.vid == 0x0424 and t.pid == 0x7801:
-            print(t.serialnum, t.software_key)
