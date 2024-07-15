@@ -21,10 +21,6 @@ dependencies = [
     'pyusb'
 ]
 
-[project.optional-dependencies]
-all = [
-]
-
 # setuptools specific
 
 [tool.setuptools.packages.find]
