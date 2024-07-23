@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: testpypi
+      name: release
       url: https://test.pypi.org/p/hydralink
 
     permissions:
