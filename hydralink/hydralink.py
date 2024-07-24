@@ -53,9 +53,10 @@ class HydraLink:
 
         phy.reset(True)
 
-        # Enable internal 125MHz clock
+        # Enable clocks
         mac[0x010] |= 0x02000000
-        # PHY RGMII setup
+        # MAC-PHY RGMII clock delay setup
+        mac[0x128] = 0x00000002
         phy[1, 0xa010] = 0x0001
         phy[1, 0xa015] = 0x0000
         # PHY LEDs setup

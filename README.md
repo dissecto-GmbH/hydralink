@@ -18,10 +18,10 @@ python -m pip install hydralink
 ### MacOS
 
 First, install python 3.
-Next, install libusb using brew:
+Next, install libusb and python-tk using brew:
 
 ```bash
-brew install libusb
+brew install libusb python-tk
 ```
 
 Finally, create a virtual environment and install pyusb and hydralink there:
