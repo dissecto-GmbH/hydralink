@@ -1,6 +1,9 @@
-name: Pub Python dist to TestPyPi
+name: Publish Python distribution for tagged releases
 
-on: push
+on:
+  push:
+    tags:
+    - '*'
 
 jobs:
   build:
