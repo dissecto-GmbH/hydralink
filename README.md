@@ -1,11 +1,48 @@
 # HydraLink
 
-Python module to control dissecto HydraLink on Linux and Windows
+Python module to control dissecto HydraLink on Linux, MacOS and Windows
 
 Can be either used as a standalone application, or as a module imported from another python program.
 
 ## Installation
-Installing the pyusb module is only necessary on Linux
+### Windows
+
+First, [install python 3 from the Microsoft Store](https://apps.microsoft.com/detail/9ncvdn91xzqp).
+
+Next, open a terminal and install hydralink from pypi:
+
+```cmd
+python -m pip install hydralink
+```
+
+### MacOS
+
+First, install python 3.
+Next, install libusb using brew:
+
+```bash
+brew install libusb
+```
+
+Finally, create a virtual environment and install pyusb and hydralink there:
+
+```bash
+python3 -m venv hydralink-venv
+source hydralink-venv/bin/activate
+python -m pip install pyusb hydralink
+```
+
+### Linux
+
+NOTE: on Linux, you can also use the [hydralink kernel module](https://github.com/dissecto-GmbH/usb2ae-kernel-module) to automatically configure HydraLink without additional software.
+
+First, install python and libusb. The specific instructions to do this are different from distribution to distribution. For example, on Ubuntu you might do it like this:
+
+```bash
+sudo apt install libusb-1.0-0 python3
+```
+
+Finally, create a virtual environment and install pyusb and hydralink there:
 
 ```bash
 python3 -m venv .venv
@@ -14,6 +51,8 @@ python -m pip install pyusb
 ```
 
 ## Usage
+
+If you installed the hydralink module in a virtual environment, make sure to activate the virtual environment.
 
 ```bash
 # Enable slave mode, 100 megabits speed
@@ -40,14 +79,16 @@ hl = HydraLink()
 # master is True or False, speed is 100 or 1000.
 hl.setup(master=True, speed=1000, promiscuous=True)
 # If an option is not specified, the current value is not changed:
-hl.setup(speed=100)
+hl.setup(speed=100)  # does not change the master mode
 ```
 
 ## Pinout
 
 ### HydraLink RC1
 On HydraLink RC1, the positive terminal is on pin 7, and the negative terminal is on pin 8 (pin 1 is the pin marked by the dot).
-![Photo of HydraLink RC1](docs/hydralink_rc1.jpg)
+![Photo of HydraLink RC1](https://raw.githubusercontent.com/dissecto-GmbH/hydralink/testpypi/docs/hydralink_rc1.jpg)
+
+Pins 1 through 5 are connected directly to the LAN7801 GPIOs (for example to be used for JTAG). These pins will not be available in the final release.
 
 1. GPIO4 (don't exceed 3.3V!)
 2. GPIO5 (don't exceed 3.3V!)
