@@ -36,7 +36,9 @@ python -m pip install pyusb hydralink
 
 NOTE: on Linux, you can also use the [hydralink kernel module](https://github.com/dissecto-GmbH/usb2ae-kernel-module) to automatically configure HydraLink without additional software.
 
-First, install python and libusb. The specific instructions to do this are different from distribution to distribution. For example, on Ubuntu you might do it like this:
+First, install python and libusb. The specific instructions to do this are different from distribution to distribution.
+
+For example, on Ubuntu you might do it like this:
 
 ```bash
 sudo apt install libusb-1.0-0 python3
@@ -47,7 +49,7 @@ Finally, create a virtual environment and install pyusb and hydralink there:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install pyusb
+python -m pip install pyusb hydralink
 ```
 
 ## Usage
