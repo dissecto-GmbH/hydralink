@@ -41,9 +41,9 @@ class BCM89881:
             self.edit_register(1, 0x0000, 0x0000, 0x8000)
 
     def set_speed(self, speed: int) -> None:
-        if speed == 1000:
+        if speed == 100:
             self.edit_register(1, 0x0000, 0x2000, 0x0040)
-        elif speed == 100:
+        elif speed == 1000:
             self.edit_register(1, 0x0000, 0x0040, 0x2000)
         else:
             raise ValueError("Speed must be 100 or 1000")
@@ -56,9 +56,9 @@ class BCM89881:
 
     def get_speed(self) -> Optional[int]:
         s = self[1, 0]
-        if s & 0x2000:
+        if (s & 0x2040) == 0x0040:
             return 1000
-        elif s & 0x0040:
+        elif (s & 0x2040) == 0x2000:
             return 100
         else:
             return None

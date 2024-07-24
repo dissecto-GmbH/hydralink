@@ -5,6 +5,7 @@
 import struct
 import sys
 
+import time
 from typing import Union, Optional
 
 from hydralink.lan7801 import LAN7801, LAN7801_LL
@@ -51,12 +52,13 @@ class HydraLink:
         mac = self.mac
         phy = self.phy
 
+        # Stop operation
         phy.reset(True)
 
         # Enable clocks
         mac[0x010] |= 0x02000000
-        # MAC-PHY RGMII clock delay setup
         mac[0x128] = 0x00000002
+        # MAC-PHY RGMII clock delay setup
         phy[1, 0xa010] = 0x0001
         phy[1, 0xa015] = 0x0000
         # PHY LEDs setup
@@ -86,6 +88,18 @@ class HydraLink:
             mac[0x11c] = lo
 
         if speed is not None:
+            # Unlock registers by disabling TXEN and TXEN
+            mac[0x104] |= 2
+            mac[0x108] |= 2
+            mac[0x104] &= 0xfffffffe
+            mac[0x108] &= 0xfffffffe
+            while not mac[0x104] & 2:
+                time.sleep(.001)
+            while not mac[0x108] & 2:
+                time.sleep(.001)
+            mac[0x104] |= 2
+            mac[0x108] |= 2
+            
             # Disable Automatic Speed Detection
             mac.set_ads(False)
             if speed == 1000:
@@ -99,9 +113,17 @@ class HydraLink:
             else:
                 raise ValueError("Speed should be either 100 or 1000")
 
+            # Lock registers by enabling TXEN and TXEN
+            mac[0x104] |= 1
+            mac[0x108] |= 1
+            while not mac[0x104] & 1:
+                time.sleep(.001)
+            while not mac[0x108] & 1:
+                time.sleep(.001)
+
         if master is not None:
             phy.set_master(master)
             print("Set hydralink to operate as %s" % ("master" if master else "slave"))
 
-        # Deassert reset, resume operation
+        # Resume operation
         phy.reset(False)

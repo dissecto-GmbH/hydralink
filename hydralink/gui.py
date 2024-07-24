@@ -76,9 +76,9 @@ class Gui:
 
         self.hl: Optional[HydraLink] = None
 
-        self.speed_var = tk.IntVar()
-        self.master_var = tk.IntVar()
-        self.promiscuous_var = tk.IntVar()
+        self.speed_var = tk.IntVar(value=-1)
+        self.master_var = tk.IntVar(value=-1)
+        self.promiscuous_var = tk.IntVar(value=-1)
 
         ttk.Label(self.frm, text="Device Selection:").grid(column=0, row=1)
         self.device_var = tk.StringVar()
