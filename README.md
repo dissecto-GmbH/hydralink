@@ -86,7 +86,7 @@ hl.setup(speed=100)  # does not change the master mode
 
 ### HydraLink RC1
 On HydraLink RC1, the positive terminal is on pin 7, and the negative terminal is on pin 8 (pin 1 is the pin marked by the dot).
-![Photo of HydraLink RC1](https://raw.githubusercontent.com/dissecto-GmbH/hydralink/testpypi/images/hydralink_rc1.jpg)
+![Photo of HydraLink RC1](https://raw.githubusercontent.com/dissecto-GmbH/hydralink/pages/images/hydralink_rc1.jpg)
 
 Pins 1 through 5 are connected directly to the LAN7801 GPIOs (for example to be used for JTAG). These pins will not be available in the final release.
 
