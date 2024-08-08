@@ -75,6 +75,45 @@ class LAN7801:
         self.write_mdio_reg(phy_addr, 0xd, 0x4000 | devad)
         self.write_mdio_reg(phy_addr, 0xe, data)
 
+    def _eeprom_cmd(self, cmd: int, addr: int) -> None:
+        if (cmd & 0b111) != cmd:
+            raise ValueError("EPC command must be a 3-bit unsigned integer")
+        if (addr & 0x1ff) != addr:
+            raise ValueError("EPC address must be a 9-bit unsigned integer")
+
+        e2p_cmd = 0x80000000
+        while e2p_cmd & 0x80000000:
+            e2p_cmd = self.dev.read_reg(0x040)
+
+        self.dev.write_reg(0x040, 0x80000000 | (cmd << 28) | addr)
+
+        e2p_cmd = 0x80000000
+        while e2p_cmd & 0x80000000:
+            e2p_cmd = self.dev.read_reg(0x040)
+
+    def eeprom_write(self, addr: int, data: int) -> None:
+        if (data & 0xff) != data:
+            raise ValueError("EPC data must be a 8-bit unsigned integer")
+        if (addr & 0x1ff) != addr:
+            raise ValueError("EPC address must be a 9-bit unsigned integer")
+
+        self._eeprom_cmd(0b010, 0)  # EWEN
+        self.write_reg(0x044, data)
+        self._eeprom_cmd(0b011, addr)  # WRITE
+        self._eeprom_cmd(0b001, 0)  # EWDS
+
+    def eeprom_read(self, addr: int) -> int:
+        if (addr & 0x1ff) != addr:
+            raise ValueError("EPC address must be a 9-bit unsigned integer")
+
+        self._eeprom_cmd(0b000, addr)  # READ
+        return self.read_reg(0x044)
+
+    def eeprom_erase_all(self) -> None:
+        self._eeprom_cmd(0b010, 0)  # EWEN
+        self._eeprom_cmd(0b110, 0)  # ERAL
+        self._eeprom_cmd(0b001, 0)  # EWDS
+
     def __getitem__(self, key: int) -> int:
         if isinstance(key, int):
             return self.read_reg(key)
