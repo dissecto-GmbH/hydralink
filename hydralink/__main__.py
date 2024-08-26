@@ -6,6 +6,7 @@
 
 import argparse
 
+from typing import Union
 from hydralink import HydraLink
 
 
@@ -17,7 +18,7 @@ def main() -> None:
     parser.add_argument('--gui', action='store_true')
     parser.add_argument('-g', '--gigabit', action='store_true')
     parser.add_argument('-m', '--master',  action='store_true')
-    parser.add_argument('-d', '--device', type=int)
+    parser.add_argument('-d', '--device', type=str)
     parser.add_argument('-p', '--promiscuous', type=bool)
     parser.add_argument('--dump', type=str, help="Dump all MAC registers to file")
     args = parser.parse_args()
@@ -26,7 +27,13 @@ def main() -> None:
         import hydralink.gui
         return hydralink.gui.main()
 
-    hl = HydraLink(args.device)
+    devid: Union[None, int, str] = None
+    try:
+        devid = int(args.device, 10)
+    except:
+        devid = args.device
+
+    hl = HydraLink(devid)
 
     if args.dump is not None:
         with open(args.dump, "w") as of:

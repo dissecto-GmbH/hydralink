@@ -4,18 +4,40 @@
 
 import usb.core
 import struct
+import sys
+import re
 
-from typing import Union, cast
+from glob import glob
+from typing import Union, cast, Optional
 
 from hydralink.lan7801 import LAN7801_LL
 
 
 class LAN7801_LibUSB(LAN7801_LL):
-    def __init__(self, d: Union[None, int, usb.core.Device] = None) -> None:
+    def __init__(self, d: Union[None, int, usb.core.Device, str] = None) -> None:
+        dev: Optional[usb.core.Device] = None
         if isinstance(d, usb.core.Device):
             dev = d
         elif isinstance(d, int):
             dev = list(usb.core.find(find_all=True, idVendor=0x0424, idProduct=0x7801))[d]
+        elif isinstance(d, str):
+            if sys.platform == 'linux':
+                globies = glob(f'/sys/bus/usb/drivers/lan78xx/**/net/{d}')
+                assert len(globies) == 1
+                matches = [re.match(r'^/sys/bus/usb/drivers/lan78xx/([^/]+)/net/([^/]+)', g) for g in globies]
+                assert len(matches) == 1
+                usbpaths = [m[1] for m in matches if m[2] == d]
+                assert len(usbpaths) == 1
+                usbpath = re.match(r'(\d)+-(\d+)(?:\.(\d+))?:(\d+)\.(\d+)', usbpaths[0])
+                assert usbpath
+                bus = int(usbpath[1])
+                port = int(usbpath[2])
+                port_numbers = (port, )
+                if usbpath[3]:
+                    hubport = int(usbpath[3])
+                    port_numbers = (port, hubport)
+                dev = usb.core.find(idVendor=0x0424, idProduct=0x7801, bus=bus, port_numbers=port_numbers)
+                assert dev
         else:
             dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)
 
