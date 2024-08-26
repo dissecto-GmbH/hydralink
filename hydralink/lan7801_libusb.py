@@ -8,7 +8,7 @@ import sys
 import re
 
 from glob import glob
-from typing import Union, cast, Optional
+from typing import Tuple, Union, cast, Optional
 
 from hydralink.lan7801 import LAN7801_LL
 
@@ -32,7 +32,7 @@ class LAN7801_LibUSB(LAN7801_LL):
                 assert usbpath
                 bus = int(usbpath[1])
                 port = int(usbpath[2])
-                port_numbers = (port, )
+                port_numbers: Union[Tuple[int, int], Tuple[int]] = (port, )
                 if usbpath[3]:
                     hubport = int(usbpath[3])
                     port_numbers = (port, hubport)
