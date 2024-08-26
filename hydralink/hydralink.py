@@ -90,13 +90,11 @@ class HydraLink:
 
         if speed is not None:
             # Unlock registers by disabling TXEN and TXEN
-            mac[0x104] |= 2
-            mac[0x108] |= 2
-            mac[0x104] &= 0xfffffffe
-            mac[0x108] &= 0xfffffffe
-            while not mac[0x104] & 2:
+            mac[0x104] = (mac[0x104] | 2) & 0xfffffffe
+            mac[0x108] = (mac[0x108] | 2) & 0xfffffffe
+            while mac[0x104] & 1:
                 time.sleep(.001)
-            while not mac[0x108] & 2:
+            while mac[0x108] & 1:
                 time.sleep(.001)
             mac[0x104] |= 2
             mac[0x108] |= 2
