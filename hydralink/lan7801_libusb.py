@@ -26,7 +26,7 @@ class LAN7801_LibUSB(LAN7801_LL):
                 assert len(globies) == 1
                 matches = [re.match(r'^/sys/bus/usb/drivers/lan78xx/([^/]+)/net/([^/]+)', g) for g in globies]
                 assert len(matches) == 1
-                usbpaths = [m[1] for m in matches if m[2] == d]
+                usbpaths = [m[1] for m in matches if m and m[2] == d]
                 assert len(usbpaths) == 1
                 usbpath = re.match(r'(\d)+-(\d+)(?:\.(\d+))?:(\d+)\.(\d+)', usbpaths[0])
                 assert usbpath
