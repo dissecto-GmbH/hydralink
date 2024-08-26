@@ -47,7 +47,7 @@ if hydralink.hydralink.is_windows():
             return None
         # Raise the exception most likely to have caused the search to fail
         for x in exceptions:
-            if not (isinstance(x, WindowsError) and hasattr(x, 'winerror') and x.winerror == 31):
+            if hasattr(x, 'winerror') and x.winerror == 31:
                 raise x
         raise exceptions[0]
 else:
