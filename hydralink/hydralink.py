@@ -16,12 +16,13 @@ def is_windows() -> bool:
     return sys.platform in ['win32', 'cygwin', 'msys']
 
 
-def get_lan7801(ll: Union[None, int, LAN7801_LL] = None) -> LAN7801:
+def get_lan7801(ll: Union[None, int, str, LAN7801_LL] = None) -> LAN7801:
     if isinstance(ll, LAN7801_LL):
         return LAN7801(ll)
 
     if is_windows():
         from hydralink.lan7801_win import LAN7801_Win
+        assert not isinstance(ll, str)
         return LAN7801(LAN7801_Win(ll))
     else:
         from hydralink.lan7801_libusb import LAN7801_LibUSB
@@ -29,7 +30,7 @@ def get_lan7801(ll: Union[None, int, LAN7801_LL] = None) -> LAN7801:
 
 
 class HydraLink:
-    def __init__(self, ll: Union[None, int, LAN7801_LL] = None) -> None:
+    def __init__(self, ll: Union[None, int, str, LAN7801_LL] = None) -> None:
         self.mac = get_lan7801(ll)
 
         # Read MAC register

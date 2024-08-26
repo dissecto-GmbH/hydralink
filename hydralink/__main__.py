@@ -30,7 +30,7 @@ def main() -> None:
     devid: Union[None, int, str] = None
     try:
         devid = int(args.device, 10)
-    except:
+    except Exception:
         devid = args.device
 
     hl = HydraLink(devid)
