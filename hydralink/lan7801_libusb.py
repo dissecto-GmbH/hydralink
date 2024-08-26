@@ -23,13 +23,17 @@ class LAN7801_LibUSB(LAN7801_LL):
         elif isinstance(d, str):
             if sys.platform == 'linux':
                 globies = glob(f'/sys/bus/usb/drivers/lan78xx/**/net/{d}')
-                assert len(globies) == 1
-                matches = [re.match(r'^/sys/bus/usb/drivers/lan78xx/([^/]+)/net/([^/]+)', g) for g in globies]
-                assert len(matches) == 1
-                usbpaths = [m[1] for m in matches if m and m[2] == d]
-                assert len(usbpaths) == 1
-                usbpath = re.match(r'(\d)+-(\d+)(?:\.(\d+))?:(\d+)\.(\d+)', usbpaths[0])
-                assert usbpath
+                if len(globies) == 0:
+                    raise FileNotFoundError("Network interface not found")
+                if len(globies) > 1:
+                    raise Exception("More than one Hydralink matches the same interface?")
+                g = globies[0]
+                m = re.match(r'^/sys/bus/usb/drivers/lan78xx/([^/]+)/net/([^/]+)', g)
+                if not m or m[2] != d:
+                    raise FileNotFoundError("Network interface name does not match")
+                usbpath = re.match(r'(\d)+-(\d+)(?:\.(\d+))?:(\d+)\.(\d+)', m[1])
+                if not usbpath:
+                    raise Exception("USB path string does not match")
                 bus = int(usbpath[1])
                 port = int(usbpath[2])
                 port_numbers: Union[Tuple[int, int], Tuple[int]] = (port, )
