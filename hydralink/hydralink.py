@@ -99,7 +99,7 @@ class HydraLink:
                 time.sleep(.001)
             mac[0x104] |= 2
             mac[0x108] |= 2
-            
+
             # Disable Automatic Speed Detection
             mac.set_ads(False)
             if speed == 1000:
