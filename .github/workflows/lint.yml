@@ -1,0 +1,33 @@
+name: flake8 Lint
+
+on: [push, pull_request]
+
+jobs:
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install flake8
+        run: pip install flake8
+      - name: flake8 Lint
+        run: |
+          python -m flake8 --max-line-length=120 --exclude=hydralink/__init__.py hydralink/
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install mypy
+        run: pip install mypy
+      - name: Run mypy
+        run: |
+          python -m mypy hydralink/

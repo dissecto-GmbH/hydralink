@@ -6,4 +6,5 @@ build
 dist
 hydralink.egg-info
 .idea
+.venv
 hydralink/__pycache__
