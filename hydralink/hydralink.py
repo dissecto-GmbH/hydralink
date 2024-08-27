@@ -16,22 +16,49 @@ def is_windows() -> bool:
     return sys.platform in ['win32', 'cygwin', 'msys']
 
 
-def get_lan7801(ll: Union[None, int, str, LAN7801_LL] = None) -> LAN7801:
-    if isinstance(ll, LAN7801_LL):
-        return LAN7801(ll)
+def get_lan7801_driver(spec: Union[None, int, str] = None) -> LAN7801_LL:
+    """Returns a LAN7801 driver object specified by index or interface name,
+    which can be used to read and write the internal configuration registers of
+    the LAN7801.
 
-    if is_windows():
+    If no argument is specified, the first LAN7801 found will be returned. If
+    an `int` is specified, a driver to the n-th LAN7801 found will be returned.
+    An interface name (example: eth1) can be specified on linux.
+
+    This function throws `FileNotFoundError` if the specified device is not
+    found.
+    """
+    if isinstance(spec, LAN7801_LL):
+        return spec
+    elif is_windows():
         from hydralink.lan7801_win import LAN7801_Win
-        assert not isinstance(ll, str)
-        return LAN7801(LAN7801_Win(ll))
+        assert not isinstance(spec, str)
+        return LAN7801_Win(spec)
     else:
         from hydralink.lan7801_libusb import LAN7801_LibUSB
-        return LAN7801(LAN7801_LibUSB(ll))
+        return LAN7801_LibUSB(spec)
 
 
 class HydraLink:
-    def __init__(self, ll: Union[None, int, str, LAN7801_LL] = None) -> None:
-        self.mac = get_lan7801(ll)
+    """A class used to configure a dissecto HydraLink"""
+    def __init__(self,
+                 spec: Union[None, int, str, LAN7801_LL] = None
+                 ) -> None:
+        """Initializes the HydraLink configuration class.
+
+        The function `get_lan7801_driver` can be used to obtain a `LAN7801_LL`
+        handle to be used as an argument to indicate a specific device if
+        multiple LAN7801 are connected.
+
+        If the product identifiers of the MAC or the PHY are unexpected, this
+        constructor will throw `IOError`.
+        If the specified device is not found, `FileNotFoundError` is thrown.
+        """
+        if isinstance(spec, LAN7801_LL):
+            ll = spec
+        else:
+            ll = get_lan7801_driver(spec)
+        self.mac = LAN7801(ll)
 
         # Read MAC register
         identifier = self.mac[0]
@@ -50,6 +77,23 @@ class HydraLink:
               mac_addr: Optional[str] = None,
               promiscuous: Optional[bool] = None
               ) -> None:
+        """All-in-one function to setup the HydraLink.
+
+        Parameters
+        ----------
+        master : bool
+            optional, set to True or False to switch between master and slave
+            operating modes of Automotive Ethernet.
+        speed : int
+            optional, set to 100 for 100Base-T1 speed, or 1000 for 1000Base-T1
+            speed.
+        mac_addr : str
+            optional, set to a mac address in the form 01:23:45:ab:cd:ef to set
+            the mac address of the device.
+        promiscuous : bool
+            optional, set to True to enable promiscuous mode (for example, to
+            be able to sniff all packets on wireshark).
+        """
         mac = self.mac
         phy = self.phy
 
