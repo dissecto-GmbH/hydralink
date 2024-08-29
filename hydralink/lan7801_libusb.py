@@ -13,6 +13,36 @@ from typing import Tuple, Union, cast, Optional
 from hydralink.lan7801 import LAN7801_LL
 
 
+def get_lan78xx_usb_dev_by_interface_name(name: str) -> usb.core.Device:
+    if sys.platform == 'linux':
+        globies = glob(f'/sys/bus/usb/drivers/**/**/net/{name}/')
+        if len(globies) == 0:
+            raise FileNotFoundError("Network interface not found")
+        if len(globies) > 1:
+            raise Exception("More than one Hydralink matches the same interface?")
+        g = globies[0]
+        m = re.match(r'^/sys/bus/usb/drivers/([^/]+)/([^/]+)/net/([^/]+)/$', g)
+        if not m or m[3] != name:
+            raise FileNotFoundError("Network interface name does not match")
+        driver, usbdir = m[1], m[2]
+        if driver != 'lan78xx':
+            raise IOError(f"Network interface is associated to driver {driver} instead of lan78xx")
+        m = re.match(r'(\d)+-(\d+)(?:\.(\d+))?:(\d+)\.(\d+)', usbdir)
+        if not m:
+            raise Exception("USB path string does not match")
+        bus = int(m[1])
+        port = int(m[2])
+        port_numbers: Union[Tuple[int, int], Tuple[int]] = (port, )
+        if m[3]:
+            hubport = int(m[3])
+            port_numbers = (port, hubport)
+        dev = usb.core.find(idVendor=0x0424, idProduct=0x7801, bus=bus, port_numbers=port_numbers)
+        assert dev
+        assert isinstance(dev, usb.core.Device)
+        return dev
+    raise NotImplementedError(f"Search by interface name not implemented for platform {sys.platform}")
+
+
 class LAN7801_LibUSB(LAN7801_LL):
     def __init__(self, d: Union[None, int, usb.core.Device, str] = None) -> None:
         dev: Optional[usb.core.Device] = None
@@ -21,26 +51,9 @@ class LAN7801_LibUSB(LAN7801_LL):
         elif isinstance(d, int):
             dev = list(usb.core.find(find_all=True, idVendor=0x0424, idProduct=0x7801))[d]
         elif isinstance(d, str):
-            if sys.platform == 'linux':
-                globies = glob(f'/sys/bus/usb/drivers/lan78xx/**/net/{d}')
-                if len(globies) == 0:
-                    raise FileNotFoundError("Network interface not found")
-                if len(globies) > 1:
-                    raise Exception("More than one Hydralink matches the same interface?")
-                g = globies[0]
-                m = re.match(r'^/sys/bus/usb/drivers/lan78xx/([^/]+)/net/([^/]+)', g)
-                if not m or m[2] != d:
-                    raise FileNotFoundError("Network interface name does not match")
-                usbpath = re.match(r'(\d)+-(\d+)(?:\.(\d+))?:(\d+)\.(\d+)', m[1])
-                if not usbpath:
-                    raise Exception("USB path string does not match")
-                bus = int(usbpath[1])
-                port = int(usbpath[2])
-                port_numbers: Union[Tuple[int, int], Tuple[int]] = (port, )
-                if usbpath[3]:
-                    hubport = int(usbpath[3])
-                    port_numbers = (port, hubport)
-                dev = usb.core.find(idVendor=0x0424, idProduct=0x7801, bus=bus, port_numbers=port_numbers)
+            dev = usb.core.find(iSerial=d)
+            if dev is None or sys.platform == 'linux':
+                dev = get_lan78xx_usb_dev_by_interface_name(d)
                 assert dev
         else:
             dev = usb.core.find(idVendor=0x0424, idProduct=0x7801)

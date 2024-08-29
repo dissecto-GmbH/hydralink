@@ -6,8 +6,8 @@ import ctypes
 import struct
 import time
 
-from typing import Optional, cast
-from hydralink.windows_apis import CloseHandle, CreateFile, DeviceIoControl
+from typing import List, Optional, Union, cast
+from hydralink.windows_apis import CloseHandle, CreateFile, DeviceIoControl, list_usb_devices
 
 from hydralink.lan7801 import LAN7801_LL
 
@@ -18,7 +18,7 @@ class LAN7801_Win(LAN7801_LL):
             self.errno = errno
             Exception.__init__(self, f"LAN7801 DeviceIoControl failed with error {errno}")
 
-    def __init__(self, interface_idx: Optional[int] = None) -> None:
+    def __init__(self, interface_idx: Union[None, int] = None) -> None:
         self.handle = CreateFile(b"\\\\.\\LAN7800_IOCTL", 0xc0000000, 3, 0, 3, 0x80, 0)
         err = ctypes.GetLastError()
         if err == 2:
@@ -30,9 +30,42 @@ class LAN7801_Win(LAN7801_LL):
         self._buffer_c = (ctypes.c_char * 0x1000).from_buffer(self._buffer)
         self.iidx = 0
         self.oidx = 0x10002
-        if interface_idx is not None:
+        if isinstance(interface_idx, int):
             self.iidx = interface_idx
             self.oidx = 0x20001
+
+    @staticmethod
+    def by_serial(serial: str) -> Optional['LAN7801_Win']:
+        devs = [t for t in list_usb_devices()
+                if t.vid == 0x0424 and t.pid == 0x7801
+                and t.serialnum == serial]
+        if len(devs) == 0:
+            return None
+        return LAN7801_Win.by_key(devs[0].software_key)
+
+    @staticmethod
+    def by_key(key: str) -> Optional['LAN7801_Win']:
+        exceptions: List[Exception] = []
+        for i in range(80):
+            mac = LAN7801_Win(i)
+            try:
+                mac_key = mac.get_adapter_registry_key()
+            except Exception as ex:
+                exceptions.append(ex)
+            else:
+                print(key, '==', mac_key)
+                if key == mac_key:
+                    return mac
+            del mac
+
+        if len(exceptions) == 0:
+            # This should not really happen
+            return None
+        # Raise the exception most likely to have caused the search to fail
+        for x in exceptions:
+            if hasattr(x, 'winerror') and x.winerror == 31:
+                raise x
+        raise exceptions[0]
 
     def __del__(self) -> None:
         CloseHandle(self.handle)

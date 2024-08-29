@@ -4,7 +4,7 @@
 
 from tkinter import ttk, messagebox
 import tkinter as tk
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, Dict, NamedTuple, Optional
 import hydralink.hydralink
 from hydralink.hydralink import HydraLink
 
@@ -29,27 +29,11 @@ if hydralink.hydralink.is_windows():
         if serial not in devices:
             return None
         key = devices[serial].software_key
-        exceptions: List[Exception] = []
-        for i in range(80):
-            mac = LAN7801_Win(i)
-            try:
-                mac_key = mac.get_adapter_registry_key()
-            except Exception as ex:
-                exceptions.append(ex)
-            else:
-                print(key, '==', mac_key)
-                if key == mac_key:
-                    return HydraLink(mac)
-            del mac
+        mac = LAN7801_Win.by_key(key)
+        if mac:
+            return HydraLink(mac)
+        return None
 
-        if len(exceptions) == 0:
-            # This should not really happen
-            return None
-        # Raise the exception most likely to have caused the search to fail
-        for x in exceptions:
-            if hasattr(x, 'winerror') and x.winerror == 31:
-                raise x
-        raise exceptions[0]
 else:
     import usb.core
     from hydralink.lan7801_libusb import LAN7801_LibUSB

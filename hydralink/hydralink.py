@@ -23,6 +23,7 @@ def get_lan7801_driver(spec: Union[None, int, str] = None) -> LAN7801_LL:
 
     If no argument is specified, the first LAN7801 found will be returned. If
     an `int` is specified, a driver to the n-th LAN7801 found will be returned.
+    A USB serial number can be specified (e.g. dscthl_12345).
     An interface name (example: eth1) can be specified on linux.
 
     This function throws `FileNotFoundError` if the specified device is not
@@ -32,8 +33,13 @@ def get_lan7801_driver(spec: Union[None, int, str] = None) -> LAN7801_LL:
         return spec
     elif is_windows():
         from hydralink.lan7801_win import LAN7801_Win
-        assert not isinstance(spec, str)
-        return LAN7801_Win(spec)
+        if isinstance(spec, str):
+            d = LAN7801_Win.by_serial(spec)
+            if not d:
+                raise FileNotFoundError(f"HydraLink '{spec}' not found")
+            return d
+        else:
+            return LAN7801_Win(spec)
     else:
         from hydralink.lan7801_libusb import LAN7801_LibUSB
         return LAN7801_LibUSB(spec)
