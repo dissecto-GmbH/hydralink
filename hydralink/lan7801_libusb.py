@@ -51,8 +51,8 @@ class LAN7801_LibUSB(LAN7801_LL):
         elif isinstance(d, int):
             dev = list(usb.core.find(find_all=True, idVendor=0x0424, idProduct=0x7801))[d]
         elif isinstance(d, str):
-            dev = usb.core.find(iSerial=d)
-            if dev is None or sys.platform == 'linux':
+            dev = usb.core.find(idVendor=0x0424, idProduct=0x7801, serial_number=d)
+            if dev is None and sys.platform == 'linux':
                 dev = get_lan78xx_usb_dev_by_interface_name(d)
                 assert dev
         else:
