@@ -34,7 +34,7 @@ python -m pip install pyusb hydralink
 
 ### Linux
 
-NOTE: on Linux, you can also use the [hydralink kernel module](https://github.com/dissecto-GmbH/usb2ae-kernel-module) to automatically configure HydraLink without additional software.
+NOTE: on Linux, you can also use the [hydralink kernel module](https://github.com/dissecto-GmbH/hydralink-kernel-module) to automatically configure HydraLink without additional software.
 
 First, install python and libusb. The specific instructions to do this are different from distribution to distribution. For example, on Ubuntu you might do it like this:
 
@@ -84,20 +84,8 @@ hl.setup(speed=100)  # does not change the master mode
 
 ## Pinout
 
-### HydraLink RC1
-On HydraLink RC1, the positive terminal is on pin 7, and the negative terminal is on pin 8 (pin 1 is the pin marked by the dot).
-![Photo of HydraLink RC1](https://raw.githubusercontent.com/dissecto-GmbH/hydralink/pages/images/hydralink_rc1.jpg)
-
-Pins 1 through 5 are connected directly to the LAN7801 GPIOs (for example to be used for JTAG). These pins will not be available in the final release.
-
-1. GPIO4 (don't exceed 3.3V!)
-2. GPIO5 (don't exceed 3.3V!)
-3. GPIO6 (don't exceed 3.3V!)
-4. GPIO7 (don't exceed 3.3V!)
-5. GPIO8 (don't exceed 3.3V!)
-6. Ground
-7. Automotive Ethernet +
-8. Automotive Ethernet -
+The following picture shows the pinout and the meaning of the LEDs of the hydralink:
+![Photo of HydraLink v1.0](https://raw.githubusercontent.com/dissecto-GmbH/hydralink/pages/images/hydralink_1.0.jpg)
 
 ## LEDs
 
@@ -109,9 +97,9 @@ While the HydraLink is not configured, the orange, green and blue are all turned
 
 Once the HydraLink is configured, the meaning of the LEDs is:
 
-The orange LED indicates that a 1 gb/s link is detected.
+The orange LED indicates that a link is detected.
 
-The green LED indicates that a 100 mb/s link is detected.
+The green LED indicates that a 1 gb/s link is detected.
 
 The blue LED indicated that there is activity on the link.
 
