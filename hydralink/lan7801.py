@@ -55,7 +55,7 @@ class LAN7801:
         if devad != devad & 0x1f:
             raise ValueError("DEVAD must be a 5-bit unsigned integer")
         if miirinda != miirinda & 0xffff:
-            raise ValueError("MII Register Index must be a 5-bit unsigned integer")
+            raise ValueError("MII Register Index must be a 16-bit unsigned integer")
         self.write_mdio_reg(phy_addr, 0xd, 0x0000 | devad)
         self.write_mdio_reg(phy_addr, 0xe, miirinda)
         self.write_mdio_reg(phy_addr, 0xd, 0x4000 | devad)
@@ -69,7 +69,7 @@ class LAN7801:
         if devad != devad & 0x1f:
             raise ValueError("DEVAD must be a 5-bit unsigned integer")
         if miirinda != miirinda & 0xffff:
-            raise ValueError("MII Register Index must be a 5-bit unsigned integer")
+            raise ValueError("MII Register Index must be a 16-bit unsigned integer")
         self.write_mdio_reg(phy_addr, 0xd, 0x0000 | devad)
         self.write_mdio_reg(phy_addr, 0xe, miirinda)
         self.write_mdio_reg(phy_addr, 0xd, 0x4000 | devad)
