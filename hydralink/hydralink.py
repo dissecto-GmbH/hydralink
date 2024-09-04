@@ -65,6 +65,7 @@ class HydraLink:
         else:
             ll = get_lan7801_driver(spec)
         self.mac = LAN7801(ll)
+        self.verbose = True
 
         # Read MAC register
         identifier = self.mac[0]
@@ -120,10 +121,12 @@ class HydraLink:
         if promiscuous is not None:
             if promiscuous:
                 mac[0x0b0] = 0x1f80
-                print("Enabled promiscuous mode")
+                if self.verbose:
+                    print("Enabled promiscuous mode")
             else:
                 mac[0x0b0] = 0x1c8a
-                print("Disabled promiscuous mode")
+                if self.verbose:
+                    print("Disabled promiscuous mode")
 
         if mac_addr is not None:
             mac_addr_bytes = b''
@@ -154,11 +157,13 @@ class HydraLink:
             if speed == 1000:
                 mac.set_speed(2)
                 phy.set_speed(1000)
-                print("Set hydralink speed to 1 Gb/s")
+                if self.verbose:
+                    print("Set hydralink speed to 1 Gb/s")
             elif speed == 100:
                 mac.set_speed(1)
                 phy.set_speed(100)
-                print("Set hydralink speed to 100 Mb/s")
+                if self.verbose:
+                    print("Set hydralink speed to 100 Mb/s")
             else:
                 raise ValueError("Speed should be either 100 or 1000")
 
@@ -172,7 +177,8 @@ class HydraLink:
 
         if master is not None:
             phy.set_master(master)
-            print("Set hydralink to operate as %s" % ("master" if master else "slave"))
+            if self.verbose:
+                print("Set hydralink to operate as %s" % ("master" if master else "slave"))
 
         # Resume operation
         phy.reset(False)
