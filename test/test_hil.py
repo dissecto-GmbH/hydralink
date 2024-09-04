@@ -5,6 +5,7 @@
 # working HydraLink.
 
 import json
+import os
 import pytest
 import time
 from typing import Optional, cast
@@ -31,6 +32,16 @@ def get_netif_by_hydralink(hl: HydraLink) -> Optional[str]:
     return net.split('/')[-2]
 
 
+def reset_hydralink(hl: HydraLink) -> Optional[str]:
+    dev = cast(LAN7801_LibUSB, hl.mac.dev).dev
+    name = str(dev.bus)+'-'+'.'.join([str(n) for n in dev.port_numbers])
+    name += ":1.0"
+    with open('/sys/bus/usb/drivers/lan78xx/unbind', 'w') as fd:
+        fd.write(name)
+    with open('/sys/bus/usb/drivers/lan78xx/bind', 'w') as fd:
+        fd.write(name)
+
+
 class TestFailedError(Exception):
     pass
 
@@ -54,7 +65,10 @@ class TestEnv:
         netif0 = get_netif_by_hydralink(hl0)
         netif1 = get_netif_by_hydralink(hl1)
         if netif0 is None:
-            raise Exception("Reference HydraLink network interface not found")
+            reset_hydralink(hl0)
+            netif0 = get_netif_by_hydralink(hl0)
+            if netif0 is None:
+                raise Exception("Reference HydraLink network interface not found")
         if netif1 is None:
             raise TestFailedError("Tested HydraLink network interface not found")
 
@@ -85,11 +99,12 @@ class TestEnv:
             size = speed*100000
         self.hl0.verbose = False
         self.hl1.verbose = False
-        self.hl0.setup(master=not master, speed=speed, promiscuous=True)
-        self.hl1.setup(master=master, speed=speed, promiscuous=True)
+        self.hl0.setup(master=not master, speed=speed)
+        self.hl1.setup(master=master, speed=speed)
         eff_speed = speed*93//100
         time.sleep(0.1)
-        with open('test_results.json', 'w+') as fd:
+        FILENAME = '/tmp/hydralink_test_results.json'
+        with open(FILENAME, 'w+') as fd:
             subprocess.check_call(
                     ['ip', 'netns', 'exec', 'ns1',
                      'iperf3', '-c', '10.0.0.100', '--bidir',
@@ -98,6 +113,7 @@ class TestEnv:
                     stdout=fd)
             fd.seek(0)
             test_results = json.load(fd)
+        os.unlink(FILENAME)
 
         end = test_results['end']
         sum_sent = end['sum_sent']
