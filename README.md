@@ -17,11 +17,17 @@ python -m pip install hydralink
 
 ### MacOS
 
-First, install python 3.
-Next, install libusb and python-tk using brew:
+[Install the LAN78xx driver from the Apple store](https://apps.apple.com/pl/app/lan78xx-driver-application/id1586760275?mt=12)
+Also, install brew:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Ensure python 3 is installed, then install libusb and python-tk using brew:
 
 ```bash
-brew install libusb python-tk
+brew install libusb
+brew install python-tk
 ```
 
 Finally, create a virtual environment and install pyusb and hydralink there:
