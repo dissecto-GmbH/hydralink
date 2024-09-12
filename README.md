@@ -18,6 +18,7 @@ python -m pip install hydralink
 ### MacOS
 
 [Install the LAN78xx driver from the Apple store](https://apps.apple.com/pl/app/lan78xx-driver-application/id1586760275?mt=12)
+
 Also, install brew:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
