@@ -34,7 +34,17 @@ class BCM89881:
             self.mac.write_mdio_reg_c45(self.phy_addr, devaddr, miiaddr, reg)
         return reg
 
-    def reset(self, rst: bool) -> None:
+    def init_hardware_config(self, force: bool = False) -> None:
+        if force or self[1, 0xa010] != 0x0001:
+            self.set_reset(True)
+            self[1, 0xa010] = 0x0001
+            self[1, 0xa015] = 0x0000
+            self[1, 0xa027] = 0x0f15
+            self[1, 0x931d] = 0x0010
+            self[1, 0x931e] = 0x0063
+            self.set_reset(False)
+
+    def set_reset(self, rst: bool) -> None:
         if rst:
             self.edit_register(1, 0x0000, 0x8000, 0x0000)
         else:
@@ -48,20 +58,20 @@ class BCM89881:
         else:
             raise ValueError("Speed must be 100 or 1000")
 
+    def get_speed(self) -> Optional[int]:
+        s = self[1, 0] & 0x2040
+        if s == 0x0040:
+            return 1000
+        elif s == 0x2000:
+            return 100
+        else:
+            return None
+
     def set_master(self, master: bool) -> None:
         if master:
             self.edit_register(1, 0x0834, 0x4000, 0x0000)
         else:
             self.edit_register(1, 0x0834, 0x0000, 0x4000)
-
-    def get_speed(self) -> Optional[int]:
-        s = self[1, 0]
-        if (s & 0x2040) == 0x0040:
-            return 1000
-        elif (s & 0x2040) == 0x2000:
-            return 100
-        else:
-            return None
 
     def get_master(self) -> bool:
         return (self[1, 0x0834] & 0x4000) == 0x4000

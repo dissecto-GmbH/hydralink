@@ -5,8 +5,7 @@
 import struct
 import sys
 
-import time
-from typing import Union, Optional
+from typing import Union, Optional, Dict, Any
 
 from hydralink.lan7801 import LAN7801, LAN7801_LL
 from hydralink.bcm89881 import BCM89881
@@ -82,7 +81,8 @@ class HydraLink:
               master: Optional[bool] = None,
               speed: Optional[int] = None,
               mac_addr: Optional[str] = None,
-              promiscuous: Optional[bool] = None
+              promiscuous: Optional[bool] = None,
+              reset: bool = False
               ) -> None:
         """All-in-one function to setup the HydraLink.
 
@@ -100,32 +100,22 @@ class HydraLink:
         promiscuous : bool
             optional, set to True to enable promiscuous mode (for example, to
             be able to sniff all packets on wireshark).
+        reset : bool
+            defaults to False, set to True to force resetting and
+            reconfiguring the PHY
         """
         mac = self.mac
         phy = self.phy
 
-        # Stop operation
-        phy.reset(True)
-
-        # Enable clocks
-        mac[0x010] |= 0x02000000
-        mac[0x128] = 0x00000002
-        # MAC-PHY RGMII clock delay setup
-        phy[1, 0xa010] = 0x0001
-        phy[1, 0xa015] = 0x0000
-        # PHY LEDs setup
-        phy[1, 0xa027] = 0x0f15
-        phy[1, 0x931d] = 0x0010
-        phy[1, 0x931e] = 0x0063
+        mac.fix_hardware_config()
+        phy.init_hardware_config(reset)
 
         if promiscuous is not None:
-            if promiscuous:
-                mac[0x0b0] = 0x1f80
-                if self.verbose:
+            mac.set_promiscuous(promiscuous)
+            if self.verbose:
+                if promiscuous:
                     print("Enabled promiscuous mode")
-            else:
-                mac[0x0b0] = 0x1c8a
-                if self.verbose:
+                else:
                     print("Disabled promiscuous mode")
 
         if mac_addr is not None:
@@ -137,48 +127,73 @@ class HydraLink:
                 mac_addr_bytes += bb
             if len(mac_addr_bytes) != 6:
                 raise ValueError("Malformed MAC address")
-            hi, lo = struct.unpack(">HI", mac_addr_bytes)
-            mac[0x118] = hi
-            mac[0x11c] = lo
+            mac.set_mac_addr(mac_addr_bytes)
 
         if speed is not None:
-            # Unlock registers by disabling TXEN and TXEN
-            mac[0x104] = (mac[0x104] | 2) & 0xfffffffe
-            mac[0x108] = (mac[0x108] | 2) & 0xfffffffe
-            while mac[0x104] & 1:
-                time.sleep(.001)
-            while mac[0x108] & 1:
-                time.sleep(.001)
-            mac[0x104] |= 2
-            mac[0x108] |= 2
-
-            # Disable Automatic Speed Detection
-            mac.set_ads(False)
             if speed == 1000:
-                mac.set_speed(2)
-                phy.set_speed(1000)
                 if self.verbose:
-                    print("Set hydralink speed to 1 Gb/s")
+                    print("Setting hydralink speed to 1 Gb/s")
             elif speed == 100:
-                mac.set_speed(1)
-                phy.set_speed(100)
                 if self.verbose:
-                    print("Set hydralink speed to 100 Mb/s")
+                    print("Setting hydralink speed to 100 Mb/s")
             else:
                 raise ValueError("Speed should be either 100 or 1000")
 
-            # Lock registers by enabling TXEN and TXEN
-            mac[0x104] |= 1
-            mac[0x108] |= 1
-            while not mac[0x104] & 1:
-                time.sleep(.001)
-            while not mac[0x108] & 1:
-                time.sleep(.001)
+            # TODO: Ensure this is not needed anymore on any platform
+            #
+            # asd = mac.get_asd()
+            # mspeed = mac.get_speed()
+            # if mspeed != speed or asd:
+            #     # Unlock registers by disabling TXEN and RXEN
+            #     mac.disable_trx()
+            #     # Disable Automatic Speed Detection
+            #     mac.set_asd(False)
+            #     mac.set_speed(speed)
+            #     # Lock registers by enabling TXEN and TXEN
+            #     mac.enable_trx()
+
+            pspeed = phy.get_speed()
+            if pspeed != speed:
+                phy.set_speed(speed)
+            else:
+                if self.verbose:
+                    print("PHY speed was already correct")
 
         if master is not None:
             phy.set_master(master)
             if self.verbose:
                 print("Set hydralink to operate as %s" % ("master" if master else "slave"))
 
-        # Resume operation
-        phy.reset(False)
+
+if is_windows():
+    from hydralink.windows_apis import list_usb_devices
+    from hydralink.lan7801_win import LAN7801_Win
+
+    def get_hydralinks() -> Dict[str, Any]:
+        return {t.serialnum: t for t in list_usb_devices() if t.vid == 0x0424 and t.pid == 0x7801}
+
+    def hydralink_by_serial(serial: str) -> Optional[HydraLink]:
+        devices = get_hydralinks()
+        if serial not in devices:
+            return None
+        key = devices[serial].software_key
+        mac = LAN7801_Win.by_key(key)
+        if mac:
+            return HydraLink(mac)
+        return None
+
+else:
+    import usb.core
+    from hydralink.lan7801_libusb import LAN7801_LibUSB
+
+    def get_hydralinks() -> Dict[str, Any]:
+        return {"%d.%d" % (dev.bus, dev.address) if dev.serial_number is None else dev.serial_number: dev
+                for dev in usb.core.find(find_all=True, idVendor=0x0424, idProduct=0x7801)}
+
+    def hydralink_by_serial(serial: str) -> Optional[HydraLink]:
+        devices = get_hydralinks()
+        if serial in devices:
+            dev: usb.core.Device = devices[serial]
+            return HydraLink(LAN7801_LibUSB(dev))
+        else:
+            return None

@@ -7,7 +7,7 @@
 import argparse
 
 from typing import Union
-from hydralink import HydraLink
+from hydralink.hydralink import HydraLink, get_hydralinks
 
 
 def main() -> None:
@@ -15,7 +15,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
                         prog='hydralink_config',
                         description='Configures the dissecto HydraLink MAC and PHY')
-    parser.add_argument('--gui', action='store_true')
+    parser.add_argument('-u', '--gui', action='store_true')
+    parser.add_argument('-l', '--list', action='store_true')
     parser.add_argument('-g', '--gigabit', action='store_true')
     parser.add_argument('-m', '--master',  action='store_true')
     parser.add_argument('-d', '--device', type=str)
@@ -26,6 +27,16 @@ def main() -> None:
     if args.gui:
         import hydralink.gui
         return hydralink.gui.main()
+
+    if args.list:
+        devs = get_hydralinks().items()
+        if len(devs) == 0:
+            print('No HydraLink device found')
+        else:
+            print(f'Found {len(devs)} HydraLink devices:')
+            for k, v in devs:
+                print(f' - {k}: {repr(v)}')
+        return
 
     devid: Union[None, int, str] = None
     try:

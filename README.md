@@ -57,6 +57,15 @@ source .venv/bin/activate
 python -m pip install pyusb
 ```
 
+#### Promiscuous mode under Linux
+
+There is currently a bug on Linux, where promiscuous mode is not enabled correctly by the kernel when a program requests it (e.g. wireshark or tcpdump).
+This is because the `rx-vlan-filter` feature is incorrectly always on, even during promiscuous mode.
+To fix this, either enable promiscuous mode from from the hydralink configuration utility **after** wireshark/tshark/tcpdump is started, or use the following command to disable `rx-vlan-filter`:
+```bash
+sudo ethtool --features ethX rx-vlan-filter off
+```
+
 ## Usage
 
 If you installed the hydralink module in a virtual environment, make sure to activate the virtual environment.
