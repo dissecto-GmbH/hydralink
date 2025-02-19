@@ -9,8 +9,7 @@ import os
 import pytest
 import time
 from typing import Optional, cast
-from hydralink.hydralink import HydraLink
-from hydralink.gui import get_hydralinks, hydralink_by_serial
+from hydralink.hydralink import HydraLink, get_hydralinks, hydralink_by_serial
 from hydralink.lan7801_libusb import LAN7801_LibUSB
 from glob import glob
 import subprocess
@@ -20,7 +19,7 @@ REFERENCE_HYDRALINK = 'dscthl_00000'  # known working
 
 
 def get_netif_by_hydralink(hl: HydraLink) -> Optional[str]:
-    dev = cast(LAN7801_LibUSB, hl.mac.dev).dev
+    dev = cast(LAN7801_LibUSB, hl.mac._dev).dev
     nets = glob('/sys/bus/usb/drivers/lan78xx/'+(
             str(dev.bus)+'-'+'.'.join([str(n) for n in dev.port_numbers])
             )+':**/net/**/')
@@ -32,8 +31,8 @@ def get_netif_by_hydralink(hl: HydraLink) -> Optional[str]:
     return net.split('/')[-2]
 
 
-def reset_hydralink(hl: HydraLink) -> Optional[str]:
-    dev = cast(LAN7801_LibUSB, hl.mac.dev).dev
+def reset_hydralink(hl: HydraLink) -> None:
+    dev = cast(LAN7801_LibUSB, hl.mac._dev).dev
     name = str(dev.bus)+'-'+'.'.join([str(n) for n in dev.port_numbers])
     name += ":1.0"
     with open('/sys/bus/usb/drivers/lan78xx/unbind', 'w') as fd:
@@ -151,6 +150,8 @@ class TestEnv:
 
 
 singleton_env: Optional[TestEnv] = None
+
+
 @pytest.fixture
 def env() -> TestEnv:
     global singleton_env
