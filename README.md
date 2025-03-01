@@ -9,7 +9,7 @@ Can be either used as a standalone application, or as a module imported from ano
 
 First, [install python 3 from the Microsoft Store](https://apps.microsoft.com/detail/9ncvdn91xzqp).
 
-Next, open a terminal and install hydralink from pypi:
+Next, open an administrator terminal (PowerShell or Command Prompt) and install hydralink from pypi:
 
 ```cmd
 python -m pip install hydralink
@@ -17,7 +17,7 @@ python -m pip install hydralink
 
 ### MacOS
 
-[Install the LAN78xx driver from the Apple store](https://apps.apple.com/pl/app/lan78xx-driver-application/id1586760275?mt=12)
+[Install the LAN78xx driver from the Apple store](https://apps.apple.com/app/lan78xx-driver-application/id1586760275?mt=12).
 
 Also, install brew:
 ```bash
@@ -34,27 +34,47 @@ brew install python-tk
 Finally, create a virtual environment and install pyusb and hydralink there:
 
 ```bash
-python3 -m venv hydralink-venv
-source hydralink-venv/bin/activate
+python3 -m venv ~/.hydralink-venv
+source ~/.hydralink-venv/bin/activate
 python -m pip install pyusb hydralink
 ```
 
 ### Linux
 
-NOTE: on Linux, you can also use the [hydralink kernel module](https://github.com/dissecto-GmbH/hydralink-kernel-module) to automatically configure HydraLink without additional software.
+*NOTE: on Linux, you can also use the [hydralink kernel module](https://github.com/dissecto-GmbH/hydralink-kernel-module) to automatically configure HydraLink without additional software.*
 
-First, install python and libusb. The specific instructions to do this are different from distribution to distribution. For example, on Ubuntu you might do it like this:
+First, install python, the libusb python module, and ethtool. The specific instructions to do this are different from distribution to distribution.
 
+- **Ubuntu/Debian:**
 ```bash
-sudo apt install libusb-1.0-0 python3
+sudo apt install ethtool python3 python3-libusb1
+```
+- **Arch Linux:**
+```bash
+sudo pacman -Syu ethtool python python-libusb1
+```
+- **Fedora:**
+```bash
+sudo dnf -y install ethtool python3 python3-libusb1
 ```
 
-Finally, create a virtual environment and install pyusb and hydralink there:
+To access the HydraLink without root privileges, create the appropriate udev rules:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install pyusb
+cat <<EOF | sudo tee /etc/udev/rules.d/99-hydralink.rules > /dev/null
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0424", ATTRS{idProduct}=="7801", TAG+="uaccess", MODE="666"
+# The following line also disables the VF flag which fixes promiscuous mode not working on Linux
+ACTION=="add", SUBSYSTEM=="net", DRIVER=="usb", ATTRS{idVendor}=="0424", ATTRS{idProduct}=="7801", RUN+="/usr/sbin/ethtool --features $env{INTERFACE} rx-vlan-filter off"
+EOF
+sudo udevadm control --reload-rules
+```
+
+Finally, create a virtual environment and install hydralink there:
+
+```bash
+python3 -m venv ~/.hydralink-venv
+source ~/.hydralink-venv/bin/activate
+python -m pip install hydralink
 ```
 
 #### Promiscuous mode under Linux
@@ -65,6 +85,8 @@ To fix this, either enable promiscuous mode from from the hydralink configuratio
 ```bash
 sudo ethtool --features ethX rx-vlan-filter off
 ```
+
+This command can be executed automatically when an HydraLink device is connected by installing the udev rule shown above.
 
 ## Usage
 
@@ -93,7 +115,7 @@ pyhton -m hydralink --gui
 from hydralink import HydraLink
 hl = HydraLink()
 # master is True or False, speed is 100 or 1000.
-hl.setup(master=True, speed=1000, promiscuous=True)
+hl.setup(master=True, speed=1000)
 # If an option is not specified, the current value is not changed:
 hl.setup(speed=100)  # does not change the master mode
 ```
