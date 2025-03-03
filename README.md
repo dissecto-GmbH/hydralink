@@ -62,9 +62,9 @@ To access the HydraLink without root privileges, create the appropriate udev rul
 
 ```bash
 cat <<EOF | sudo tee /etc/udev/rules.d/99-hydralink.rules > /dev/null
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0424", ATTRS{idProduct}=="7801", TAG+="uaccess", MODE="666"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0424", ATTRS{idProduct}=="7801", MODE="0666", TAG+="uaccess"
 # The following line also disables the VF flag which fixes promiscuous mode not working on Linux
-ACTION=="add", SUBSYSTEM=="net", DRIVER=="usb", ATTRS{idVendor}=="0424", ATTRS{idProduct}=="7801", RUN+="/usr/sbin/ethtool --features $env{INTERFACE} rx-vlan-filter off"
+ACTION=="add", SUBSYSTEM=="net", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0424", ATTRS{idProduct}=="7801", RUN+="/usr/sbin/ethtool --features $env{INTERFACE} rx-vlan-filter off"
 EOF
 sudo udevadm control --reload-rules
 ```
