@@ -192,7 +192,7 @@ class LAN7801:
     def set_promiscuous(self, promiscuous: bool) -> None:
         # Normally when promiscuous mode is enabled by wireshark:
         # - Windows 11 does 0x1c8a -> 0x1f80  (Works fine out of the box)
-        # - Linux 6.13 does 0x7ca2 -> 0x7fa2  Note: the VF tag is not disabled!
+        # - Linux does 0x7ca2 -> 0x7fa2  Note: the VF tag is not disabled!
         # This means, on linux promiscuous mode doesn't work out of the box.
         # This could be fixed manually by the user with the command:
         #   `sudo ethtool --features enp11s0u2 rx-vlan-filter off`

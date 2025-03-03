@@ -10,6 +10,11 @@ from typing import Union
 from hydralink.hydralink import HydraLink, get_hydralinks
 
 
+def gui() -> None:
+    import hydralink.gui
+    return hydralink.gui.main()
+
+
 def main() -> None:
 
     parser = argparse.ArgumentParser(
@@ -25,8 +30,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.gui:
-        import hydralink.gui
-        return hydralink.gui.main()
+        return gui()
 
     if args.list:
         devs = get_hydralinks().items()

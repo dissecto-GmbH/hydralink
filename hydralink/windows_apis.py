@@ -200,26 +200,28 @@ class FoundUsbDevice(NamedTuple):
 def list_usb_devices() -> Iterable[FoundUsbDevice]:
     regex = re.compile(r'^\\\\\?\\usb#vid_([a-f0-9]{4})&pid_([a-f0-9]{4})#([^#]*)' +
                        r'#\{a5dcbf10-6530-11d2-901f-00c04fb951ed\}')
-    for g_hdi, did in wSetupDiEnumDeviceInterfaces(GUID_DEVINTERFACE_USB_DEVICE):
+    try:
+        for g_hdi, did in wSetupDiEnumDeviceInterfaces(GUID_DEVINTERFACE_USB_DEVICE):
 
-        detailData, devinfo = wSetupDiGetDeviceInterfaceDetail(g_hdi, did)
-        details = detailData[4:]
-        devicePath = details[:details.index(b'\x00')].decode('latin1')
+            detailData, devinfo = wSetupDiGetDeviceInterfaceDetail(g_hdi, did)
+            details = detailData[4:]
+            devicePath = details[:details.index(b'\x00')].decode('latin1')
 
-        PropertyBuffer, _ = wSetupDiGetDeviceRegistryProperty(g_hdi, devinfo, SPDRP_DRIVER)
+            PropertyBuffer, _ = wSetupDiGetDeviceRegistryProperty(g_hdi, devinfo, SPDRP_DRIVER)
 
-        software_key = PropertyBuffer.decode('latin1')
-        software_key = software_key[:software_key.find('\x00')]
+            software_key = PropertyBuffer.decode('latin1')
+            software_key = software_key[:software_key.find('\x00')]
 
-        m = regex.match(devicePath)
-        assert m is not None
-        vid, pid, serialnum = int(m[1], 16), int(m[2], 16), m[3]
-        yield FoundUsbDevice(
-            vid=vid,
-            pid=pid,
-            serialnum=serialnum,
-            software_key=software_key,
-            path=devicePath
-        )
+            m = regex.match(devicePath)
+            assert m is not None
+            vid, pid, serialnum = int(m[1], 16), int(m[2], 16), m[3]
+            yield FoundUsbDevice(
+                vid=vid,
+                pid=pid,
+                serialnum=serialnum,
+                software_key=software_key,
+                path=devicePath
+            )
 
-    SetupDiDestroyDeviceInfoList(g_hdi)
+    finally:
+        SetupDiDestroyDeviceInfoList(g_hdi)
