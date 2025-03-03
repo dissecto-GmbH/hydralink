@@ -32,6 +32,7 @@ exclude = [
 ]
 
 [project.scripts]
-hydralink_config = "hydralink:main"
+hydralink-config = "hydralink.__main__:main"
+hydralink-gui = "hydralink.__main__:gui"
 
 [tool.setuptools_scm]

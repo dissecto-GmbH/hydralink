@@ -106,7 +106,13 @@ class Gui:
             state='disabled')
         self.button_promiscuous.grid(column=0, row=5, columnspan=2)
 
+    def periodic_check(self) -> None:
+        if self.hl is not None:
+            self.vars.get_vars(self.hl)
+        self.root.after(2000, self.periodic_check)
+
     def run(self) -> None:
+        self.root.after(2000, self.periodic_check)
         self.root.mainloop()
 
     def dropdown_opened(self) -> None:
