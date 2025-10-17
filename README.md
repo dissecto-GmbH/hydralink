@@ -81,7 +81,7 @@ python -m pip install hydralink
 
 There is currently a bug on Linux, where promiscuous mode is not enabled correctly by the kernel when a program requests it (e.g. wireshark or tcpdump).
 This is because the `rx-vlan-filter` feature is incorrectly always on, even during promiscuous mode.
-To fix this, either enable promiscuous mode from from the hydralink configuration utility **after** wireshark/tshark/tcpdump is started, or use the following command to disable `rx-vlan-filter`:
+To fix this, either enable promiscuous mode from the hydralink configuration utility **after** wireshark/tshark/tcpdump is started, or use the following command to disable `rx-vlan-filter`:
 ```bash
 sudo ethtool --features ethX rx-vlan-filter off
 ```
@@ -106,7 +106,7 @@ python -m hydralink -g
 python -m hydralink -m -g
 
 # Show the configuration gui. This requires the python tkinter module!
-pyhton -m hydralink --gui
+python -m hydralink --gui
 ```
 
 ## API
@@ -139,5 +139,5 @@ The orange LED indicates that a link is detected.
 
 The green LED indicates that a 1 gb/s link is detected.
 
-The blue LED indicated that there is activity on the link.
+The blue LED indicates that there is activity on the link.
 
